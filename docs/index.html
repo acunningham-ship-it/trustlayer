@@ -4,337 +4,775 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TrustLayer — You bring the AI. We bring the trust.</title>
-  <meta name="description" content="The universal AI trust layer. Verify every output, control your data, and connect all your AI tools in one place." />
+  <meta name="description" content="The universal AI trust layer. Verify every output, track costs across all providers, compare models on your actual tasks — runs entirely on your machine." />
+  <meta property="og:title" content="TrustLayer — You bring the AI. We bring the trust." />
+  <meta property="og:description" content="Verify AI outputs, track costs, compare models. Open source. Local-first. No account required." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://acunningham-ship-it.github.io/trustlayer/" />
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --stone-50: #fafaf9; --stone-100: #f5f5f4; --stone-200: #e7e5e4;
-      --stone-400: #a8a29e; --stone-500: #78716c; --stone-600: #57534e;
-      --stone-700: #44403c; --stone-800: #292524; --stone-900: #1c1917;
-      --stone-950: #0c0a09; --green-600: #16a34a; --amber-500: #f59e0b;
+      --stone-50: #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-400: #a8a29e;
+      --stone-500: #78716c;
+      --stone-600: #57534e;
+      --stone-700: #44403c;
+      --stone-800: #292524;
+      --stone-900: #1c1917;
+      --stone-950: #0c0a09;
+      --green-500: #22c55e;
+      --green-600: #16a34a;
+      --amber-400: #fbbf24;
+      --amber-500: #f59e0b;
+      --red-500: #ef4444;
+      --accent: #44403c;
     }
-    html { font-family: 'Inter', system-ui, sans-serif; background: var(--stone-50); color: var(--stone-900); }
+    html { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--stone-50); color: var(--stone-900); line-height: 1.5; -webkit-font-smoothing: antialiased; }
     html.dark { background: var(--stone-950); color: var(--stone-100); }
 
-    /* Nav */
-    nav { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--stone-200); background: rgba(250,250,249,0.9); backdrop-filter: blur(12px); }
-    .dark nav { border-color: #292524; background: rgba(12,10,9,0.9); }
-    nav .inner { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-    .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; letter-spacing: -0.02em; }
-    .logo svg { color: var(--stone-700); }
-    .dark .logo svg { color: var(--stone-300); }
-    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
-    .nav-links a { text-decoration: none; color: var(--stone-500); font-size: 0.875rem; transition: color 0.15s; }
-    .nav-links a:hover { color: var(--stone-900); }
-    .dark .nav-links a:hover { color: var(--stone-100); }
-    .btn-primary { background: var(--stone-900); color: white; padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: opacity 0.15s; }
+    /* ——— NAV ——— */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      border-bottom: 1px solid var(--stone-200);
+      background: rgba(250,250,249,0.92);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+    }
+    .dark nav { border-color: var(--stone-800); background: rgba(12,10,9,0.92); }
+    .nav-inner { max-width: 1140px; margin: 0 auto; padding: 0.875rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.9375rem; letter-spacing: -0.03em; text-decoration: none; color: inherit; }
+    .logo-shield { color: var(--stone-700); flex-shrink: 0; }
+    .dark .logo-shield { color: var(--stone-300); }
+    .nav-links { display: flex; align-items: center; gap: 0.25rem; }
+    .nav-links a { text-decoration: none; color: var(--stone-500); font-size: 0.8125rem; font-weight: 500; padding: 0.375rem 0.625rem; border-radius: 0.375rem; transition: color 0.15s, background 0.15s; }
+    .nav-links a:hover { color: var(--stone-900); background: var(--stone-100); }
+    .dark .nav-links a:hover { color: var(--stone-100); background: var(--stone-800); }
+    .btn-nav { background: var(--stone-900); color: white !important; padding: 0.4375rem 1rem !important; border-radius: 0.5rem !important; font-weight: 600 !important; transition: opacity 0.15s !important; }
+    .btn-nav:hover { opacity: 0.85 !important; background: var(--stone-900) !important; }
+    .dark .btn-nav { background: var(--stone-100) !important; color: var(--stone-900) !important; }
+    #themeToggle { background: none; border: 1px solid var(--stone-200); border-radius: 0.375rem; padding: 0.375rem 0.625rem; cursor: pointer; color: var(--stone-500); font-size: 0.8125rem; transition: all 0.15s; }
+    .dark #themeToggle { border-color: var(--stone-700); }
+    #themeToggle:hover { border-color: var(--stone-400); color: var(--stone-700); }
+
+    /* ——— HERO ——— */
+    .hero { max-width: 1140px; margin: 0 auto; padding: 7rem 1.5rem 5rem; text-align: center; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--stone-100); color: var(--stone-600);
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.375rem 0.875rem; border-radius: 9999px;
+      margin-bottom: 2.5rem; border: 1px solid var(--stone-200);
+      letter-spacing: 0.02em;
+    }
+    .dark .hero-badge { background: var(--stone-800); color: var(--stone-400); border-color: var(--stone-700); }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-500); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .hero h1 {
+      font-size: clamp(2.75rem, 7vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1.0;
+      margin-bottom: 1.75rem;
+    }
+    .hero h1 .muted { color: var(--stone-400); }
+    .dark .hero h1 .muted { color: var(--stone-500); }
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.1875rem);
+      color: var(--stone-500);
+      max-width: 580px; margin: 0 auto 3rem;
+      line-height: 1.65; font-weight: 400;
+    }
+    .hero-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3.5rem; }
+    .btn-primary {
+      background: var(--stone-900); color: white;
+      padding: 0.75rem 1.75rem; border-radius: 0.625rem;
+      font-size: 0.9375rem; font-weight: 600;
+      text-decoration: none; transition: opacity 0.15s;
+      letter-spacing: -0.01em;
+    }
     .dark .btn-primary { background: var(--stone-100); color: var(--stone-900); }
     .btn-primary:hover { opacity: 0.85; }
-    #themeToggle { background: none; border: 1px solid var(--stone-200); border-radius: 0.5rem; padding: 0.375rem 0.625rem; cursor: pointer; color: var(--stone-500); font-size: 0.75rem; }
-    .dark #themeToggle { border-color: #292524; }
+    .btn-secondary {
+      background: transparent; color: var(--stone-700);
+      padding: 0.75rem 1.5rem; border-radius: 0.625rem;
+      font-size: 0.9375rem; font-weight: 500;
+      text-decoration: none; border: 1px solid var(--stone-300);
+      transition: all 0.15s; letter-spacing: -0.01em;
+    }
+    .dark .btn-secondary { color: var(--stone-300); border-color: var(--stone-700); }
+    .btn-secondary:hover { background: var(--stone-100); border-color: var(--stone-400); }
+    .dark .btn-secondary:hover { background: var(--stone-800); }
 
-    /* Hero */
-    .hero { max-width: 1100px; margin: 0 auto; padding: 6rem 1.5rem 5rem; text-align: center; }
-    .hero-badge { display: inline-block; background: var(--stone-100); color: var(--stone-600); font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.75rem; border-radius: 9999px; margin-bottom: 2rem; border: 1px solid var(--stone-200); }
-    .dark .hero-badge { background: #292524; color: var(--stone-400); border-color: #3a3634; }
-    .hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; margin-bottom: 1.5rem; }
-    .hero h1 em { font-style: normal; color: var(--stone-500); }
-    .dark .hero h1 em { color: var(--stone-400); }
-    .hero p { font-size: 1.125rem; color: var(--stone-500); max-width: 600px; margin: 0 auto 2.5rem; line-height: 1.6; }
-    .hero-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
-    .btn-secondary { background: transparent; color: var(--stone-700); padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; border: 1px solid var(--stone-300); transition: all 0.15s; }
-    .dark .btn-secondary { color: var(--stone-300); border-color: #3a3634; }
-    .btn-secondary:hover { background: var(--stone-100); }
-    .dark .btn-secondary:hover { background: #292524; }
-    .hero-install { margin-top: 3rem; }
-    .install-cmd { display: inline-block; background: var(--stone-900); color: #a8ff78; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.875rem; padding: 0.875rem 1.5rem; border-radius: 0.75rem; cursor: pointer; position: relative; }
+    /* Install command */
+    .install-block { display: inline-block; text-align: left; }
+    .install-cmd {
+      display: flex; align-items: center; gap: 1rem;
+      background: var(--stone-900); color: #d4d0c8;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.875rem; padding: 1rem 1.5rem;
+      border-radius: 0.875rem; cursor: pointer;
+      transition: opacity 0.15s; position: relative;
+    }
     .dark .install-cmd { background: var(--stone-800); }
-    .install-cmd:hover::after { content: 'Copied!'; position: absolute; top: -2rem; left: 50%; transform: translateX(-50%); background: var(--stone-800); color: white; font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; }
-    .install-label { font-size: 0.7rem; color: var(--stone-400); margin-top: 0.5rem; }
+    .install-cmd .prompt { color: var(--stone-600); user-select: none; }
+    .install-cmd .cmd-text { color: #a8ff78; }
+    .install-copy { background: var(--stone-800); border: 1px solid var(--stone-700); color: var(--stone-400); padding: 0.25rem 0.625rem; border-radius: 0.375rem; font-size: 0.6875rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    .install-copy:hover { color: var(--stone-200); border-color: var(--stone-500); }
+    .install-note { font-size: 0.6875rem; color: var(--stone-400); margin-top: 0.625rem; text-align: center; }
 
-    /* Trust score demo */
-    .demo-section { background: var(--stone-100); border-top: 1px solid var(--stone-200); border-bottom: 1px solid var(--stone-200); }
-    .dark .demo-section { background: #1a1714; border-color: #292524; }
-    .demo-inner { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem; }
-    .section-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--stone-400); margin-bottom: 1.5rem; }
-    .demo-card { background: white; border: 1px solid var(--stone-200); border-radius: 1rem; padding: 1.5rem; max-width: 520px; margin: 0 auto; }
-    .dark .demo-card { background: var(--stone-900); border-color: #292524; }
-    .demo-card h3 { font-size: 0.875rem; font-weight: 500; color: var(--stone-500); margin-bottom: 0.75rem; }
-    .demo-card p { font-size: 0.875rem; color: var(--stone-600); line-height: 1.6; }
+    /* Stats bar */
+    .stats-bar { border-top: 1px solid var(--stone-200); border-bottom: 1px solid var(--stone-200); padding: 2rem 1.5rem; margin-top: 4rem; }
+    .dark .stats-bar { border-color: var(--stone-800); }
+    .stats-inner { max-width: 1140px; margin: 0 auto; display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.04em; }
+    .stat-label { font-size: 0.8125rem; color: var(--stone-400); margin-top: 0.25rem; }
+
+    /* ——— DEMO WIDGET ——— */
+    .demo-section { padding: 5rem 1.5rem; }
+    .demo-inner { max-width: 1140px; margin: 0 auto; }
+    .section-eyebrow { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--stone-400); margin-bottom: 1rem; }
+    .section-title { font-size: clamp(1.75rem, 4vw, 2.625rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 1rem; }
+    .section-sub { font-size: 1rem; color: var(--stone-500); max-width: 520px; line-height: 1.6; }
+
+    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 3rem; }
+    .demo-card {
+      background: white; border: 1px solid var(--stone-200);
+      border-radius: 1rem; padding: 1.5rem;
+      transition: box-shadow 0.2s;
+    }
+    .demo-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .dark .demo-card { background: var(--stone-900); border-color: var(--stone-800); }
+    .dark .demo-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+    .demo-card-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--stone-400); margin-bottom: 1rem; }
+    .demo-card p { font-size: 0.9rem; color: var(--stone-600); line-height: 1.65; margin-bottom: 1.25rem; }
     .dark .demo-card p { color: var(--stone-400); }
-    .trust-badge { display: flex; align-items: center; gap: 0.5rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--stone-100); }
-    .dark .trust-badge { border-color: #292524; }
-    .score-ring { width: 3rem; height: 3rem; border-radius: 50%; border: 3px solid #16a34a; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; color: #16a34a; }
-    .trust-text strong { display: block; font-size: 0.875rem; color: var(--stone-800); }
-    .dark .trust-text strong { color: var(--stone-200); }
-    .trust-text span { font-size: 0.75rem; color: var(--stone-400); }
 
-    /* Features */
-    .features { max-width: 1100px; margin: 0 auto; padding: 5rem 1.5rem; }
-    .features-header { text-align: center; margin-bottom: 4rem; }
-    .features-header h2 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 1rem; }
-    .features-header p { color: var(--stone-500); max-width: 500px; margin: 0 auto; }
-    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-    .feature-card { background: white; border: 1px solid var(--stone-200); border-radius: 1rem; padding: 1.75rem; }
-    .dark .feature-card { background: var(--stone-900); border-color: #292524; }
-    .feature-icon { width: 2.5rem; height: 2.5rem; background: var(--stone-100); border-radius: 0.625rem; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.25rem; }
+    .trust-result { border-top: 1px solid var(--stone-100); padding-top: 1.25rem; display: flex; align-items: flex-start; gap: 0.875rem; }
+    .dark .trust-result { border-color: var(--stone-800); }
+    .score-ring {
+      flex-shrink: 0; width: 3.25rem; height: 3.25rem;
+      border-radius: 50%; border: 3px solid;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.8125rem;
+    }
+    .score-high { border-color: var(--green-500); color: var(--green-600); }
+    .score-med { border-color: var(--amber-500); color: var(--amber-500); }
+    .score-low { border-color: var(--red-500); color: var(--red-500); }
+    .trust-detail strong { display: block; font-size: 0.875rem; font-weight: 600; color: var(--stone-800); margin-bottom: 0.25rem; }
+    .dark .trust-detail strong { color: var(--stone-200); }
+    .trust-detail .flags { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.5rem; }
+    .flag { font-size: 0.6875rem; padding: 0.2rem 0.5rem; border-radius: 9999px; font-weight: 500; }
+    .flag-ok { background: #dcfce7; color: #166534; }
+    .dark .flag-ok { background: #052e16; color: #86efac; }
+    .flag-warn { background: #fef3c7; color: #92400e; }
+    .dark .flag-warn { background: #451a03; color: #fde68a; }
+    .flag-bad { background: #fee2e2; color: #991b1b; }
+    .dark .flag-bad { background: #450a0a; color: #fca5a5; }
+
+    /* ——— FEATURES ——— */
+    .features-section { padding: 5rem 1.5rem; background: var(--stone-100); border-top: 1px solid var(--stone-200); border-bottom: 1px solid var(--stone-200); }
+    .dark .features-section { background: #111110; border-color: var(--stone-800); }
+    .features-inner { max-width: 1140px; margin: 0 auto; }
+    .features-header { margin-bottom: 3.5rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; }
+    .feature-card {
+      background: white; border: 1px solid var(--stone-200);
+      border-radius: 1rem; padding: 1.875rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
+    .dark .feature-card { background: var(--stone-900); border-color: var(--stone-800); }
+    .dark .feature-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .feature-icon {
+      width: 2.75rem; height: 2.75rem;
+      background: var(--stone-100); border-radius: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; margin-bottom: 1.25rem;
+    }
     .dark .feature-icon { background: var(--stone-800); }
-    .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
-    .feature-card p { font-size: 0.875rem; color: var(--stone-500); line-height: 1.6; }
+    .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .feature-card p { font-size: 0.875rem; color: var(--stone-500); line-height: 1.65; }
+    .feature-tag { display: inline-block; font-size: 0.6875rem; font-weight: 600; color: var(--stone-400); background: var(--stone-100); border-radius: 0.25rem; padding: 0.125rem 0.5rem; margin-top: 0.875rem; }
+    .dark .feature-tag { background: var(--stone-800); }
 
-    /* Code */
-    .code-section { background: var(--stone-900); color: var(--stone-100); }
-    .dark .code-section { background: var(--stone-800); }
-    .code-inner { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem; }
-    .code-inner h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
-    .code-inner p { color: var(--stone-400); margin-bottom: 2rem; font-size: 0.875rem; }
-    .code-tabs { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; }
-    .code-tab { padding: 0.375rem 0.875rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; color: var(--stone-400); background: transparent; border: none; }
-    .code-tab.active { background: var(--stone-800); color: var(--stone-100); }
-    .dark .code-tab.active { background: var(--stone-700); }
-    pre { background: var(--stone-800); border-radius: 0.75rem; padding: 1.5rem; overflow-x: auto; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8125rem; line-height: 1.7; }
+    /* ——— HOW IT WORKS ——— */
+    .how-section { padding: 5rem 1.5rem; }
+    .how-inner { max-width: 1140px; margin: 0 auto; }
+    .how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3rem; }
+    .how-step { position: relative; }
+    .step-num {
+      width: 2.25rem; height: 2.25rem; border-radius: 50%;
+      background: var(--stone-900); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.875rem; font-weight: 700; margin-bottom: 1.25rem;
+    }
+    .dark .step-num { background: var(--stone-100); color: var(--stone-900); }
+    .how-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .how-step p { font-size: 0.875rem; color: var(--stone-500); line-height: 1.65; }
+    .step-connector {
+      position: absolute; top: 1.125rem; left: 2.75rem;
+      right: -1rem; height: 1px; background: var(--stone-200);
+    }
+    .dark .step-connector { background: var(--stone-800); }
+    .how-step:last-child .step-connector { display: none; }
+
+    /* ——— CODE ——— */
+    .code-section { background: var(--stone-900); padding: 5rem 1.5rem; }
+    .dark .code-section { background: var(--stone-950); }
+    .code-inner { max-width: 1140px; margin: 0 auto; }
+    .code-inner .section-eyebrow { color: var(--stone-500); }
+    .code-inner .section-title { color: var(--stone-100); }
+    .code-inner .section-sub { color: var(--stone-400); }
+    .code-tabs { display: flex; gap: 0.25rem; margin: 2rem 0 1.25rem; background: var(--stone-800); border-radius: 0.625rem; padding: 0.25rem; width: fit-content; }
+    .code-tab {
+      padding: 0.4375rem 1rem; border-radius: 0.4375rem;
+      font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+      color: var(--stone-400); background: transparent; border: none;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .code-tab.active { background: var(--stone-700); color: var(--stone-100); }
+    pre {
+      background: var(--stone-800); border-radius: 0.875rem;
+      padding: 1.75rem; overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.8125rem; line-height: 1.75;
+      border: 1px solid var(--stone-700);
+    }
     .dark pre { background: var(--stone-900); }
     .code-pane { display: none; }
     .code-pane.active { display: block; }
-    .kw { color: #a5f3fc; } .fn { color: #86efac; } .str { color: #fde68a; } .cm { color: #6b7280; }
+    .kw { color: #93c5fd; } .fn { color: #86efac; } .str { color: #fde68a; }
+    .cm { color: #6b7280; } .num { color: #fb923c; } .op { color: #a5f3fc; }
 
-    /* Pain points */
-    .pain { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem; }
-    .pain h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 1rem; }
-    .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
-    .pain-card { border: 1px solid var(--stone-200); border-radius: 0.75rem; padding: 1.25rem; }
-    .dark .pain-card { border-color: #292524; }
-    .pain-card blockquote { font-size: 0.9rem; color: var(--stone-600); line-height: 1.6; font-style: italic; }
+    /* ——— COMPARISON ——— */
+    .compare-section { padding: 5rem 1.5rem; background: var(--stone-100); border-top: 1px solid var(--stone-200); border-bottom: 1px solid var(--stone-200); }
+    .dark .compare-section { background: #111110; border-color: var(--stone-800); }
+    .compare-inner { max-width: 900px; margin: 0 auto; }
+    .compare-table { width: 100%; border-collapse: collapse; margin-top: 3rem; font-size: 0.875rem; }
+    .compare-table th { text-align: left; padding: 0.875rem 1rem; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stone-400); border-bottom: 1px solid var(--stone-200); }
+    .dark .compare-table th { border-color: var(--stone-800); }
+    .compare-table td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--stone-200); color: var(--stone-600); }
+    .dark .compare-table td { border-color: var(--stone-800); color: var(--stone-400); }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table .feature-col { font-weight: 500; color: var(--stone-800); }
+    .dark .compare-table .feature-col { color: var(--stone-200); }
+    .compare-table .trustlayer-col { color: var(--stone-900); font-weight: 500; }
+    .dark .compare-table .trustlayer-col { color: var(--stone-100); }
+    .check { color: var(--green-600); font-size: 1rem; }
+    .cross { color: var(--stone-300); font-size: 1rem; }
+    .partial { color: var(--amber-500); font-size: 0.9rem; }
+    .dark .cross { color: var(--stone-700); }
+
+    /* ——— PAIN POINTS ——— */
+    .pain-section { padding: 5rem 1.5rem; }
+    .pain-inner { max-width: 1140px; margin: 0 auto; }
+    .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 3rem; }
+    .pain-card { border: 1px solid var(--stone-200); border-radius: 0.875rem; padding: 1.5rem; background: white; }
+    .dark .pain-card { border-color: var(--stone-800); background: var(--stone-900); }
+    .pain-card blockquote { font-size: 0.9375rem; color: var(--stone-600); line-height: 1.65; font-style: italic; }
     .dark .pain-card blockquote { color: var(--stone-400); }
-    .pain-card cite { display: block; margin-top: 0.75rem; font-size: 0.75rem; color: var(--stone-400); font-style: normal; }
+    .pain-card cite { display: block; margin-top: 1rem; font-size: 0.75rem; color: var(--stone-400); font-style: normal; font-weight: 500; }
 
-    /* CTA */
-    .cta { text-align: center; padding: 5rem 1.5rem; max-width: 700px; margin: 0 auto; }
-    .cta h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.04em; margin-bottom: 1rem; }
-    .cta p { color: var(--stone-500); margin-bottom: 2rem; }
+    /* ——— CTA ——— */
+    .cta-section { padding: 6rem 1.5rem; text-align: center; }
+    .cta-inner { max-width: 640px; margin: 0 auto; }
+    .cta-inner .section-title { font-size: clamp(2rem, 5vw, 3.25rem); margin-bottom: 1.25rem; }
+    .cta-inner p { color: var(--stone-500); margin-bottom: 2.5rem; font-size: 1rem; line-height: 1.65; }
+    .cta-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
 
-    /* Footer */
+    /* ——— FOOTER ——— */
     footer { border-top: 1px solid var(--stone-200); }
-    .dark footer { border-color: #292524; }
-    footer .inner { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    footer p { font-size: 0.8rem; color: var(--stone-400); }
-    footer a { color: var(--stone-400); text-decoration: none; }
+    .dark footer { border-color: var(--stone-800); }
+    footer .footer-inner {
+      max-width: 1140px; margin: 0 auto;
+      padding: 2rem 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1.5rem; flex-wrap: wrap;
+    }
+    .footer-links { display: flex; gap: 1.5rem; }
+    footer a { color: var(--stone-400); text-decoration: none; font-size: 0.8125rem; transition: color 0.15s; }
     footer a:hover { color: var(--stone-600); }
+    .dark footer a:hover { color: var(--stone-300); }
+    footer p { font-size: 0.8125rem; color: var(--stone-400); }
 
-    @media (max-width: 640px) {
+    /* ——— RESPONSIVE ——— */
+    @media (max-width: 768px) {
       .nav-links { display: none; }
-      .hero-actions { flex-direction: column; align-items: center; }
+      .demo-grid { grid-template-columns: 1fr; }
+      .how-steps { grid-template-columns: 1fr; }
+      .how-step .step-connector { display: none; }
+      .stats-inner { gap: 2.5rem; }
+    }
+    @media (max-width: 480px) {
+      .hero { padding: 5rem 1.25rem 4rem; }
+      .hero h1 { font-size: 2.25rem; }
     }
   </style>
 </head>
 <body>
+  <!-- NAV -->
   <nav>
-    <div class="inner">
-      <div class="logo">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <svg class="logo-shield" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         TrustLayer
-      </div>
+      </a>
       <div class="nav-links">
         <a href="#features">Features</a>
+        <a href="#how">How it works</a>
         <a href="#code">Quick Start</a>
         <a href="https://github.com/acunningham-ship-it/trustlayer">GitHub</a>
-        <button id="themeToggle">☾ Dark</button>
-        <a href="https://github.com/acunningham-ship-it/trustlayer" class="btn-primary">Star on GitHub</a>
+        <button id="themeToggle">☾</button>
+        <a href="https://github.com/acunningham-ship-it/trustlayer" class="btn-nav">Star on GitHub ★</a>
       </div>
     </div>
   </nav>
 
+  <!-- HERO -->
   <section class="hero">
-    <div class="hero-badge">Open Source · Local-first · Privacy by default</div>
-    <h1>You bring the AI.<br><em>We bring the trust.</em></h1>
-    <p>The universal trust layer for every AI tool you use. Verify outputs, track costs, compare models — all from one open-source app that runs entirely on your machine.</p>
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      Open Source · Local-first · Privacy by default
+    </div>
+    <h1>You bring the AI.<br><span class="muted">We bring the trust.</span></h1>
+    <p class="hero-sub">
+      The universal trust layer for every AI tool you use. Verify outputs, track costs across all providers, and compare models on your actual tasks — running entirely on your machine.
+    </p>
     <div class="hero-actions">
       <a href="https://github.com/acunningham-ship-it/trustlayer" class="btn-primary">Get started free</a>
-      <a href="#features" class="btn-secondary">See all features</a>
+      <a href="#how" class="btn-secondary">See how it works →</a>
     </div>
-    <div class="hero-install">
-      <div class="install-cmd" onclick="copyInstall(this)">pip install trustlayer &amp;&amp; trustlayer server</div>
-      <div class="install-label">One command. No account required.</div>
+    <div class="install-block">
+      <div class="install-cmd" onclick="copyInstall(this)">
+        <span class="prompt">$</span>
+        <span class="cmd-text">pip install trustlayer &amp;&amp; trustlayer server</span>
+        <span class="install-copy">copy</span>
+      </div>
+      <div class="install-note">No account. No config. Works in 30 seconds.</div>
+    </div>
+
+    <div class="stats-bar" style="margin-top: 4.5rem; border-radius: 1rem; border: 1px solid var(--stone-200);">
+      <div class="stats-inner">
+        <div class="stat">
+          <div class="stat-num">8</div>
+          <div class="stat-label">Core features</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">0</div>
+          <div class="stat-label">Required accounts</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">100%</div>
+          <div class="stat-label">Local by default</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">MIT</div>
+          <div class="stat-label">License</div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="demo-section">
+  <!-- DEMO -->
+  <section class="demo-section" id="demo">
     <div class="demo-inner">
-      <div class="section-label" style="text-align:center">What it looks like</div>
-      <div class="demo-card">
-        <h3>AI Response — Claude Sonnet</h3>
-        <p>The global average temperature has risen by 1.1°C since pre-industrial times. Studies definitively show this will lead to a 100% increase in extreme weather events by 2050, affecting every region on Earth without exception.</p>
-        <div class="trust-badge">
-          <div class="score-ring" style="border-color: #d97706; color: #d97706;">71</div>
-          <div class="trust-text">
-            <strong>Medium trust — 2 concerns flagged</strong>
-            <span>Absolute language detected · Specific statistic unverified</span>
+      <div class="section-eyebrow">Verification Engine</div>
+      <h2 class="section-title">Trust scores on every output</h2>
+      <p class="section-sub">TrustLayer analyzes each AI response for hallucinations, overconfidence, and unverifiable claims — then gives you a simple 0–100 score with specific flags.</p>
+
+      <div class="demo-grid">
+        <div class="demo-card">
+          <div class="demo-card-label">AI Response — Claude Sonnet</div>
+          <p>"The global average temperature has risen by 1.1°C since pre-industrial times. Studies definitively show this will lead to a 100% increase in extreme weather events by 2050, affecting every region on Earth without exception."</p>
+          <div class="trust-result">
+            <div class="score-ring score-med">71</div>
+            <div class="trust-detail">
+              <strong>Medium trust — 2 concerns flagged</strong>
+              <div class="flags">
+                <span class="flag flag-ok">✓ Core statistic verified</span>
+                <span class="flag flag-warn">⚠ Absolute language detected</span>
+                <span class="flag flag-warn">⚠ "100%" statistic unverified</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-card-label">AI Response — GPT-4.1</div>
+          <p>"The Earth is approximately 4.5 billion years old, based on radiometric dating of meteorites and the oldest known Earth rocks. This estimate has been consistent across multiple independent dating methods."</p>
+          <div class="trust-result">
+            <div class="score-ring score-high">94</div>
+            <div class="trust-detail">
+              <strong>High trust — well sourced</strong>
+              <div class="flags">
+                <span class="flag flag-ok">✓ Fact verified</span>
+                <span class="flag flag-ok">✓ Sources cited</span>
+                <span class="flag flag-ok">✓ Qualified language</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="features" id="features">
-    <div class="features-header">
-      <h2>Everything you need to trust AI</h2>
-      <p>Eight core features that make TrustLayer the last AI tool you need to add to your stack.</p>
-    </div>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3>Universal Connector</h3>
-        <p>Plug in any AI: Ollama (auto-detected), Claude, GPT-4, Gemini, Aider. One interface for all of them. Switch seamlessly.</p>
+  <!-- FEATURES -->
+  <section class="features-section" id="features">
+    <div class="features-inner">
+      <div class="features-header">
+        <div class="section-eyebrow">What's included</div>
+        <h2 class="section-title">Everything you need to trust AI</h2>
+        <p class="section-sub">Eight core features that make TrustLayer the last AI tool you need to add to your workflow.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🛡</div>
-        <h3>Verification Engine</h3>
-        <p>Every AI output gets a trust score 0–100. Hallucination flags, confidence analysis, and claim-by-claim assessment.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🧠</div>
-        <h3>Personal Learning</h3>
-        <p>Remembers how you work across sessions. Your 500th session is meaningfully better than your 1st. Stored locally.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💰</div>
-        <h3>Cost Tracker</h3>
-        <p>Real-time spending dashboard across all providers. Budget alerts and optimization tips to cut your bill.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚖</div>
-        <h3>Model Comparison</h3>
-        <p>Test your actual tasks against multiple models. Personal benchmarks — not generic leaderboard scores.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📚</div>
-        <h3>Offline Knowledge Base</h3>
-        <p>Drag in docs, notes, PDFs, code repos. Indexed locally. Works completely offline with Ollama.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚙</div>
-        <h3>No-Code Workflows</h3>
-        <p>Visual workflow builder for non-developers. Templates for summarize-email, doc Q&A, and auto-verify.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎭</div>
-        <h3>Adaptive Personality</h3>
-        <p>Honest for factual queries. Creative for brainstorming. Invisible for routine tasks. Adapts automatically.</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Universal Connector</h3>
+          <p>Plug in any AI: Ollama (auto-detected), Claude, GPT-4, Gemini, Aider. One unified interface for all of them. Switch between providers seamlessly.</p>
+          <span class="feature-tag">Ollama · Anthropic · OpenAI · Google</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Verification Engine</h3>
+          <p>Every AI output gets a 0–100 trust score. Hallucination detection, overconfidence flags, and claim-by-claim source attribution.</p>
+          <span class="feature-tag">Trust Score · Hallucination detection</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3>Personal Learning</h3>
+          <p>Remembers how you work across sessions. Learns your writing style, common tasks, and preferences. Your 500th session is better than your 1st.</p>
+          <span class="feature-tag">Stored locally · No cloud sync</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <h3>Cost Tracker</h3>
+          <p>Real-time spending dashboard across all AI providers. Budget alerts and per-task cost optimization tips to cut your bill.</p>
+          <span class="feature-tag">Budget alerts · Monthly reports</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚖️</div>
+          <h3>Model Comparison</h3>
+          <p>Test your actual tasks against multiple models side-by-side. Personal benchmarks — not generic leaderboard scores that don't match your workflow.</p>
+          <span class="feature-tag">Side-by-side · Speed · Accuracy · Cost</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📚</div>
+          <h3>Offline Knowledge Base</h3>
+          <p>Drag in your docs, notes, PDFs, and code repos. Everything indexed locally. AI uses your context when answering. Works fully offline with Ollama.</p>
+          <span class="feature-tag">Local indexing · Works offline</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚙️</div>
+          <h3>No-Code Workflows</h3>
+          <p>Visual workflow builder for non-developers. Templates for summarize-email, doc Q&A, and auto-verify. Drag and drop — no prompts needed.</p>
+          <span class="feature-tag">Visual builder · Pre-built templates</span>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎭</div>
+          <h3>Adaptive Personality</h3>
+          <p>Honest and humble for factual queries. Creative and opinionated for brainstorming. Invisible for routine tasks. Adapts automatically to context.</p>
+          <span class="feature-tag">Context-aware · Auto-adapts</span>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- HOW IT WORKS -->
+  <section class="how-section" id="how">
+    <div class="how-inner">
+      <div class="section-eyebrow">How it works</div>
+      <h2 class="section-title">Simple to start. Powerful over time.</h2>
+      <p class="section-sub">TrustLayer sits between you and every AI you use. You don't change your workflow — you just gain visibility and trust.</p>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="step-connector"></div>
+          <div class="step-num">1</div>
+          <h3>Connect your AIs</h3>
+          <p>Ollama is auto-detected. Add API keys for Claude, GPT-4, or Gemini via the Settings page or environment variables. No account required for TrustLayer itself.</p>
+        </div>
+        <div class="how-step">
+          <div class="step-connector"></div>
+          <div class="step-num">2</div>
+          <h3>Every output gets verified</h3>
+          <p>As you use AI, TrustLayer silently scores each response. Trust scores, hallucination flags, and source attribution appear inline — without slowing you down.</p>
+        </div>
+        <div class="how-step">
+          <div class="step-num">3</div>
+          <h3>It learns your patterns</h3>
+          <p>TrustLayer remembers your sessions, preferences, and writing style. Over time, it surfaces better suggestions, cheaper alternatives, and personalized tips.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CODE -->
   <section class="code-section" id="code">
     <div class="code-inner">
-      <h2>Simple by design</h2>
-      <p>Works with everything you already have. Zero config required.</p>
+      <div class="section-eyebrow">Quick Start</div>
+      <h2 class="section-title" style="color: var(--stone-100);">Simple by design</h2>
+      <p class="section-sub">Works with everything you already have. Zero config. One command to start.</p>
+
       <div class="code-tabs">
-        <button class="code-tab active" onclick="showCode('install')">Install</button>
-        <button class="code-tab" onclick="showCode('cli')">CLI</button>
-        <button class="code-tab" onclick="showCode('api')">API</button>
+        <button class="code-tab active" onclick="showCode('install', event)">Install</button>
+        <button class="code-tab" onclick="showCode('cli', event)">CLI</button>
+        <button class="code-tab" onclick="showCode('api', event)">REST API</button>
+        <button class="code-tab" onclick="showCode('python', event)">Python</button>
       </div>
+
       <div id="install" class="code-pane active">
-        <pre><span class="cm"># Install</span>
-pip install trustlayer
+        <pre><span class="cm"># Install TrustLayer</span>
+<span class="fn">pip</span> install trustlayer
 
-<span class="cm"># Start the server + UI</span>
-trustlayer server
+<span class="cm"># Start the server + web UI</span>
+<span class="fn">trustlayer</span> server
+<span class="cm"># → Auto-detects Ollama</span>
+<span class="cm"># → Opens http://localhost:8000</span>
 
-<span class="cm"># Auto-detects Ollama, checks for API keys</span>
-<span class="cm"># Opens http://localhost:8000</span></pre>
+<span class="cm"># Add your API keys (optional)</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=sk-ant-...
+<span class="kw">export</span> OPENAI_API_KEY=sk-...</pre>
       </div>
+
       <div id="cli" class="code-pane">
         <pre><span class="cm"># Verify any AI output</span>
-trustlayer verify "The earth is 4.5 billion years old."
+<span class="fn">trustlayer</span> verify <span class="str">"The earth is 4.5 billion years old."</span>
+<span class="cm"># → Trust Score: 94/100 (HIGH) — No concerns</span>
 
 <span class="cm"># Ask any connected AI</span>
-trustlayer ask "Summarize this PR" --provider ollama --model llama3.2
+<span class="fn">trustlayer</span> ask <span class="str">"Summarize this codebase"</span> --provider ollama --model llama3.2
 
-<span class="cm"># Compare across providers</span>
-trustlayer compare "Write a regex for email validation"
+<span class="cm"># Compare responses from multiple models</span>
+<span class="fn">trustlayer</span> compare <span class="str">"Write unit tests for this function"</span>
 
-<span class="cm"># Check your spending</span>
-trustlayer costs</pre>
+<span class="cm"># Check your spending across all providers</span>
+<span class="fn">trustlayer</span> costs
+
+<span class="cm"># Detect available AI tools on your machine</span>
+<span class="fn">trustlayer</span> detect</pre>
       </div>
+
       <div id="api" class="code-pane">
-        <pre><span class="cm"># Verify via REST API</span>
-curl -X POST http://localhost:8000/api/verify \
-  -H "Content-Type: application/json" \
-  -d '{"content": "Your AI output here"}'
+        <pre><span class="cm"># Verify content via REST API</span>
+<span class="fn">curl</span> -X POST http://localhost:8000/api/verify \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"content": "Your AI output here"}'</span>
 
 <span class="cm"># Response:</span>
 {
-  <span class="str">"trust_score"</span>: 87,
+  <span class="str">"trust_score"</span>: <span class="num">87</span>,
   <span class="str">"trust_label"</span>: <span class="str">"high"</span>,
-  <span class="str">"summary"</span>: <span class="str">"This response is 87% trusted."</span>,
+  <span class="str">"summary"</span>: <span class="str">"87% trusted. 0 concerns flagged."</span>,
   <span class="str">"issues"</span>: []
-}</pre>
+}
+
+<span class="cm"># Compare models on the same prompt</span>
+<span class="fn">curl</span> -X POST http://localhost:8000/api/compare \
+  -d <span class="str">'{"prompt": "Explain quantum entanglement"}'</span></pre>
+      </div>
+
+      <div id="python" class="code-pane">
+        <pre><span class="kw">import</span> requests
+
+<span class="cm"># Verify any AI output</span>
+response = requests.<span class="fn">post</span>(<span class="str">"http://localhost:8000/api/verify"</span>, json={
+    <span class="str">"content"</span>: <span class="str">"AI output to verify"</span>
+})
+result = response.<span class="fn">json</span>()
+<span class="fn">print</span>(<span class="op">f</span><span class="str">"Trust: {result['trust_score']}/100 — {result['trust_label']}"</span>)
+
+<span class="cm"># Compare providers side by side</span>
+comparison = requests.<span class="fn">post</span>(<span class="str">"http://localhost:8000/api/compare"</span>, json={
+    <span class="str">"prompt"</span>: <span class="str">"Your task here"</span>,
+    <span class="str">"providers"</span>: [<span class="str">"ollama"</span>, <span class="str">"anthropic"</span>, <span class="str">"openai"</span>]
+}).<span class="fn">json</span>()</pre>
       </div>
     </div>
   </section>
 
-  <section class="pain">
-    <h2 style="text-align:center; margin-bottom:1rem">Why people need this</h2>
-    <p style="text-align:center; color:var(--stone-500); margin-bottom:2.5rem; font-size:0.9rem">Real frustrations from AI users</p>
-    <div class="pain-grid">
-      <div class="pain-card">
-        <blockquote>"I use Claude for work and ChatGPT for personal stuff and Ollama for code. I have no idea which one is actually correct when they disagree."</blockquote>
-        <cite>— Developer, 5 years</cite>
-      </div>
-      <div class="pain-card">
-        <blockquote>"I spent $200 on API calls last month and I have no idea what I even used it for. There's no way to track this across providers."</blockquote>
-        <cite>— Freelancer</cite>
-      </div>
-      <div class="pain-card">
-        <blockquote>"AI confidently told me a statistic that was completely made up. I published it. It was embarrassing."</blockquote>
-        <cite>— Content creator</cite>
-      </div>
-      <div class="pain-card">
-        <blockquote>"My company's data is going to OpenAI servers and I can't do anything about it. We need a local alternative."</blockquote>
-        <cite>— Enterprise developer</cite>
+  <!-- COMPARISON -->
+  <section class="compare-section">
+    <div class="compare-inner">
+      <div class="section-eyebrow">Why TrustLayer</div>
+      <h2 class="section-title">What you're missing without it</h2>
+      <p class="section-sub">No other tool gives you verification, cost tracking, personal learning, and offline support — all in one place that runs locally.</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th style="color: var(--stone-800);" class="">TrustLayer</th>
+            <th>Open WebUI</th>
+            <th>Individual AI apps</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="feature-col">Output verification &amp; trust scores</td>
+            <td class="trustlayer-col"><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-col">Cross-provider cost tracking</td>
+            <td class="trustlayer-col"><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-col">Personal learning across sessions</td>
+            <td class="trustlayer-col"><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="partial">~</span></td>
+          </tr>
+          <tr>
+            <td class="feature-col">Side-by-side model comparison</td>
+            <td class="trustlayer-col"><span class="check">✓</span></td>
+            <td><span class="partial">~</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-col">Offline local knowledge base</td>
+            <td class="trustlayer-col"><span class="check">✓</span></td>
+            <td><span class="partial">~</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-col">No-code workflow builder</td>
+            <td class="trustlayer-col"><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-col">100% local — no cloud required</td>
+            <td class="trustlayer-col"><span class="check">✓</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td class="feature-col">Open source, MIT license</td>
+            <td class="trustlayer-col"><span class="check">✓</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PAIN POINTS -->
+  <section class="pain-section">
+    <div class="pain-inner">
+      <div class="section-eyebrow">Why this matters</div>
+      <h2 class="section-title">Real problems, finally solved</h2>
+      <p class="section-sub">These are the frustrations that TrustLayer was built to address.</p>
+      <div class="pain-grid">
+        <div class="pain-card">
+          <blockquote>"I use Claude for work, ChatGPT for personal stuff, and Ollama for code. I have no idea which one is actually correct when they disagree."</blockquote>
+          <cite>— Developer, 5 years experience</cite>
+        </div>
+        <div class="pain-card">
+          <blockquote>"I spent $200 on API calls last month and I have no idea what I even used it for. There's no way to track this across providers."</blockquote>
+          <cite>— Freelance developer</cite>
+        </div>
+        <div class="pain-card">
+          <blockquote>"AI confidently told me a statistic that was completely made up. I published it. It was embarrassing."</blockquote>
+          <cite>— Content creator</cite>
+        </div>
+        <div class="pain-card">
+          <blockquote>"My company's data is going to OpenAI servers and I can't do anything about it. We need a local alternative that actually works."</blockquote>
+          <cite>— Enterprise developer</cite>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="cta">
-    <h2>Stop guessing. Start trusting.</h2>
-    <p>TrustLayer is free, open source, and runs entirely on your machine. Your data never leaves your computer.</p>
-    <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
-      <a href="https://github.com/acunningham-ship-it/trustlayer" class="btn-primary">View on GitHub</a>
-      <a href="https://github.com/acunningham-ship-it/trustlayer#readme" class="btn-secondary">Read the docs</a>
+  <!-- CTA -->
+  <section class="cta-section" style="border-top: 1px solid var(--stone-200);">
+    <div class="dark" style="display:none">dummy</div>
+    <div class="cta-inner">
+      <div class="section-eyebrow" style="text-align: center;">Get started</div>
+      <h2 class="section-title" style="text-align: center;">Stop guessing.<br>Start trusting.</h2>
+      <p>TrustLayer is free, open source, and runs entirely on your machine. Your data never leaves your computer. No account required.</p>
+      <div class="cta-actions">
+        <a href="https://github.com/acunningham-ship-it/trustlayer" class="btn-primary">View on GitHub</a>
+        <a href="https://github.com/acunningham-ship-it/trustlayer#readme" class="btn-secondary">Read the docs</a>
+      </div>
     </div>
   </section>
 
+  <!-- FOOTER -->
   <footer>
-    <div class="inner">
-      <p>© 2026 TrustLayer — MIT License</p>
-      <p><a href="https://github.com/acunningham-ship-it/trustlayer">GitHub</a></p>
+    <div class="footer-inner">
+      <div class="logo">
+        <svg class="logo-shield" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        TrustLayer
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/acunningham-ship-it/trustlayer">GitHub</a>
+        <a href="https://github.com/acunningham-ship-it/trustlayer/issues">Issues</a>
+        <a href="https://github.com/acunningham-ship-it/trustlayer#readme">Docs</a>
+      </div>
+      <p>MIT License · Built for the AI Builder Challenge 2026</p>
     </div>
   </footer>
 
   <script>
+    // Theme toggle
     const toggle = document.getElementById('themeToggle');
     const html = document.documentElement;
-    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (dark) { html.classList.add('dark'); toggle.textContent = '☀ Light'; }
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (prefersDark) { html.classList.add('dark'); toggle.textContent = '☀'; }
     toggle.addEventListener('click', () => {
       html.classList.toggle('dark');
-      toggle.textContent = html.classList.contains('dark') ? '☀ Light' : '☾ Dark';
+      toggle.textContent = html.classList.contains('dark') ? '☀' : '☾';
     });
 
-    function showCode(id) {
+    // Code tabs
+    function showCode(id, e) {
       document.querySelectorAll('.code-pane').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
       document.getElementById(id).classList.add('active');
-      event.target.classList.add('active');
+      if (e && e.target) e.target.classList.add('active');
     }
 
+    // Copy install command
     function copyInstall(el) {
-      navigator.clipboard.writeText('pip install trustlayer && trustlayer server');
-      el.style.opacity = '0.7';
-      setTimeout(() => el.style.opacity = '1', 1000);
+      navigator.clipboard.writeText('pip install trustlayer && trustlayer server').catch(() => {});
+      const copy = el.querySelector('.install-copy');
+      if (copy) { copy.textContent = 'copied!'; setTimeout(() => copy.textContent = 'copy', 2000); }
+    }
+
+    // Smooth stats counter animation
+    function animateCounters() {
+      document.querySelectorAll('.stat-num').forEach(el => {
+        const text = el.textContent;
+        if (text === 'MIT' || text === '100%') return;
+        const num = parseInt(text);
+        if (isNaN(num)) return;
+        let start = 0;
+        const step = () => {
+          start = Math.min(start + Math.ceil(num / 20), num);
+          el.textContent = start;
+          if (start < num) requestAnimationFrame(step);
+        };
+        el.textContent = '0';
+        requestAnimationFrame(step);
+      });
+    }
+
+    // Trigger counter on scroll into view
+    const statsEl = document.querySelector('.stats-bar');
+    if (statsEl && 'IntersectionObserver' in window) {
+      const obs = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) { animateCounters(); obs.disconnect(); }
+      }, { threshold: 0.5 });
+      obs.observe(statsEl);
     }
   </script>
 </body>

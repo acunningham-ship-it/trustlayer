@@ -2,12 +2,13 @@
 
 **You bring the AI. We bring the trust.**
 
-The universal trust layer for every AI tool you use. Verify outputs, track costs, compare models, and keep your data local — all from one open-source app.
+The universal trust layer for every AI tool you use. Verify outputs, track costs, compare models, and keep your data local — all from one open-source app that runs on your machine.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-stone.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-stone.svg)](https://python.org)
+[![Website](https://img.shields.io/badge/website-live-green.svg)](https://acunningham-ship-it.github.io/trustlayer)
 
-> **[Website](https://acunningham-ship-it.github.io/trustlayer)** · **[GitHub](https://github.com/acunningham-ship-it/trustlayer)**
+> **[Website](https://acunningham-ship-it.github.io/trustlayer)** · **[Quick Start](#quick-start)** · **[CLI Reference](#cli-usage)** · **[REST API](#rest-api)**
 
 ---
 
@@ -20,7 +21,7 @@ People don't trust AI. Not because it's incapable — but because:
 - 100 new AI tools launch daily — impossible to evaluate all of them
 - No single place to track what you're spending across all providers
 
-TrustLayer wraps around **all of them**. You bring whatever AI you already trust. We add the trust layer.
+**TrustLayer wraps around all of them.** You bring whatever AI you already trust. We add the trust layer on top.
 
 ---
 
@@ -28,13 +29,13 @@ TrustLayer wraps around **all of them**. You bring whatever AI you already trust
 
 | Feature | What it does |
 |---|---|
-| **Universal Connector** | Plug in any AI: Ollama, Claude, GPT-4, Gemini, Aider. One interface. |
+| **Universal Connector** | Plug in any AI: Ollama (auto-detected), Claude, GPT-4, Gemini. One interface for all. |
 | **Verification Engine** | Every output gets a trust score 0–100. Hallucination and overconfidence flags. |
 | **Personal Learning** | Learns how you work across sessions. Stored 100% locally. |
-| **Cost Tracker** | Real-time spending across all providers. Budget alerts. Optimization tips. |
-| **Model Comparison** | Test your actual tasks across models. Personal benchmarks. |
-| **Offline Knowledge Base** | Index your docs, PDFs, code repos. Works offline with Ollama. |
-| **No-Code Workflows** | Visual workflow builder. Summarize emails, auto-verify, Q&A your docs. |
+| **Cost Tracker** | Real-time spending dashboard across all providers. Budget alerts. |
+| **Model Comparison** | Test your actual tasks across models side-by-side. Personal benchmarks. |
+| **Offline Knowledge Base** | Index your docs, PDFs, code repos. Works fully offline with Ollama. |
+| **No-Code Workflows** | Visual workflow builder. Summarize emails, auto-verify, doc Q&A. |
 | **Adaptive Personality** | Honest for facts. Creative for brainstorming. Adapts automatically. |
 
 ---
@@ -47,10 +48,11 @@ pip install trustlayer
 
 # Start the server + web UI
 trustlayer server
-# → http://localhost:8000
+# → Auto-detects Ollama if running
+# → Opens http://localhost:8000
 ```
 
-That's it. TrustLayer auto-detects Ollama if it's running. Add API keys via environment variables:
+That's it. Add API keys if you want cloud providers:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -65,19 +67,25 @@ export GOOGLE_API_KEY=...
 ```bash
 # Verify any AI output
 trustlayer verify "The earth is 4.5 billion years old."
-# → Trust Score: 92/100 (HIGH) — No concerns
+# → Trust Score: 94/100 (HIGH) — No concerns
 
 # Ask any connected AI
 trustlayer ask "Summarize this codebase" --provider ollama --model llama3.2
 
-# Compare across providers
+# Compare multiple providers side-by-side on the same prompt
 trustlayer compare "Write unit tests for this function"
 
-# Check your AI spending
+# Check your spending across all providers
 trustlayer costs
 
-# Detect available AI tools
+# Detect what AI tools are available on your machine
 trustlayer detect
+
+# Upload documents to your local knowledge base
+trustlayer knowledge upload ./my-docs/
+
+# Learn and track your session
+trustlayer learn
 ```
 
 ---
@@ -97,9 +105,20 @@ curl -X POST http://localhost:8000/api/verify \
   "summary": "This response is 87% trusted. 0 concern(s) flagged.",
   "issues": []
 }
+
+# Compare providers
+curl -X POST http://localhost:8000/api/compare \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Explain quantum entanglement", "providers": ["ollama", "anthropic"]}'
+
+# Check costs
+curl http://localhost:8000/api/costs
+
+# List connected providers
+curl http://localhost:8000/api/connectors
 ```
 
-Full API docs at `http://localhost:8000/docs` when server is running.
+Full interactive docs at `http://localhost:8000/docs` (Swagger UI) when the server is running.
 
 ---
 
@@ -107,24 +126,38 @@ Full API docs at `http://localhost:8000/docs` when server is running.
 
 ```
 trustlayer/
-├── backend/              # FastAPI backend
-│   ├── main.py           # Application entry point
-│   ├── config.py         # Configuration
-│   ├── database.py       # SQLite (SQLAlchemy async)
-│   ├── providers/        # AI provider adapters
-│   └── routers/          # API routes (8 feature routers)
-├── frontend/             # React + TypeScript + Tailwind
-├── cli/                  # Typer CLI
+├── backend/              # FastAPI backend (async SQLite)
+│   ├── main.py           # Application entry point + lifespan
+│   ├── config.py         # Configuration (env vars)
+│   ├── database.py       # SQLite with SQLAlchemy async
+│   ├── providers/        # AI provider adapters (Ollama, OpenAI-compat)
+│   └── routers/          # 8 feature routers
+│       ├── verify.py     # Verification engine + trust scoring
+│       ├── compare.py    # Multi-provider comparison
+│       ├── connectors.py # Provider detection & management
+│       ├── costs.py      # Cost tracking + budget alerts
+│       ├── knowledge.py  # Local knowledge base (RAG)
+│       ├── learn.py      # Personal learning & session memory
+│       ├── workflows.py  # No-code workflow builder
+│       └── settings.py   # Runtime configuration
+├── frontend/             # React + TypeScript + Tailwind CSS
+│   └── src/pages/        # Dashboard, Verify, Compare, Costs, Knowledge,
+│                         # Connectors, Workflows, Settings
+├── cli/                  # Python CLI (Typer) with rich output
 └── docs/                 # GitHub Pages website
 ```
 
-All data stored in `~/.trustlayer/` — nothing leaves your machine.
+All data stored in `~/.trustlayer/` — nothing leaves your machine unless you configure cloud providers.
 
 ---
 
-## Privacy
+## Privacy & Local-First Design
 
-Local-first by design. No telemetry. No cloud sync. No accounts. SQLite database in `~/.trustlayer/`. Works fully offline with Ollama.
+- **No telemetry.** No usage data sent anywhere.
+- **No accounts.** TrustLayer itself requires no sign-up.
+- **No cloud sync.** SQLite database lives at `~/.trustlayer/trustlayer.db`.
+- **Fully offline.** Works completely without internet when using Ollama.
+- **Your keys, your calls.** API calls go directly from your machine to providers.
 
 ---
 
@@ -134,16 +167,28 @@ Local-first by design. No telemetry. No cloud sync. No accounts. SQLite database
 git clone https://github.com/acunningham-ship-it/trustlayer
 cd trustlayer
 
-# Backend
+# Backend (FastAPI)
 pip install -r requirements.txt
 uvicorn backend.main:app --reload
+# → http://localhost:8000
 
-# Frontend
+# Frontend (React + Vite)
 cd frontend && npm install && npm run dev
+# → http://localhost:5173
 
 # CLI
-cd cli && pip install -e . && trustlayer --help
+pip install -e .
+trustlayer --help
+
+# Tests
+pytest tests/
 ```
+
+---
+
+## Contributing
+
+Issues and PRs are welcome. TrustLayer is MIT licensed — use it, fork it, build on it.
 
 ---
 
