@@ -1,6 +1,7 @@
 """TrustLayer Backend - Universal AI Trust Layer API"""
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -52,3 +53,12 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/api/info")
+async def info():
+    """Get app info (version and data directory)."""
+    return {
+        "version": "0.1.0",
+        "dataDir": os.path.expanduser("~/.trustlayer")
+    }
