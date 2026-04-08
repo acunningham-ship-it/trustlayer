@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class RemoveTrailingSlashMiddleware(BaseHTTPMiddleware):
-    """Normalize URLs by removing trailing slashes and re-routing."""
+    """Normalize URLs by removing trailing slashes and re-routing.
+
+    This ensures both /api/verify and /api/verify/ work without 307 redirects.
+    """
     async def dispatch(self, request: Request, call_next):
         if request.url.path != "/" and request.url.path.endswith("/"):
             new_path = request.url.path.rstrip("/")
