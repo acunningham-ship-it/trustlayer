@@ -83,6 +83,17 @@ async def get_settings(db=Depends(get_db)):
             settings["apiKeys"]["ollamaBaseUrl"] = raw  # URL is not sensitive
             settings["configured"]["ollama"] = bool(raw)
 
+    # Auto-detect Ollama if not explicitly configured
+    if not settings["configured"]["ollama"]:
+        try:
+            import httpx
+            r = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+            if r.status_code == 200:
+                settings["configured"]["ollama"] = True
+                settings["apiKeys"]["ollamaBaseUrl"] = "http://localhost:11434"
+        except Exception:
+            pass
+
     return settings
 
 
