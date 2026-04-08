@@ -12,6 +12,22 @@ The universal trust layer for every AI tool you use. Verify outputs, track costs
 
 ---
 
+## 🚀 One Command to Get Started
+
+```bash
+pip install trustlayer && trustlayer server
+```
+
+That's it. Runs locally. Auto-detects Ollama. No account needed. [See full Quick Start below ↓](#quick-start)
+
+---
+
+## Demo
+
+_[See TrustLayer in action — demo GIF coming soon]_
+
+---
+
 ## Why TrustLayer?
 
 People don't trust AI. Not because it's incapable — but because:
