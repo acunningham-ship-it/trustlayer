@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   Shield, Zap, GitCompare, DollarSign, BookOpen,
-  Workflow, LayoutDashboard, Moon, Sun, Settings as SettingsIcon
+  Workflow, LayoutDashboard, Moon, Sun, Settings as SettingsIcon, Brain
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -13,6 +13,7 @@ const nav = [
   { to: '/costs', label: 'Costs', icon: DollarSign },
   { to: '/knowledge', label: 'Knowledge', icon: BookOpen },
   { to: '/workflows', label: 'Workflows', icon: Workflow },
+  { to: '/profile', label: 'Profile', icon: Brain },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]
 

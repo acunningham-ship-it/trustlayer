@@ -10,6 +10,7 @@ import Costs from './pages/Costs'
 import Knowledge from './pages/Knowledge'
 import Workflows from './pages/Workflows'
 import Settings from './pages/Settings'
+import Profile from './pages/Profile'
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/costs" element={<Costs />} />
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/workflows" element={<Workflows />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
