@@ -3,10 +3,15 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import Column, String, Float, Integer, DateTime, Text, Boolean, JSON
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 from .config import DATABASE_URL
+
+
+def utc_now():
+    """Return current UTC time as timezone-aware datetime."""
+    return datetime.now(UTC)
 
 
 class Base(DeclarativeBase):
@@ -26,7 +31,7 @@ class AIInteraction(Base):
     tokens_used = Column(Integer, default=0)
     cost_usd = Column(Float, default=0.0)
     latency_ms = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
 
 class UserProfile(Base):
@@ -35,7 +40,7 @@ class UserProfile(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     key = Column(String, unique=True, nullable=False)
     value = Column(JSON, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
 
 class KnowledgeItem(Base):
@@ -56,7 +61,7 @@ class WorkflowDef(Base):
     description = Column(Text, nullable=True)
     steps = Column(JSON, nullable=False)  # List of workflow steps
     enabled = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
 
 class CostEntry(Base):
