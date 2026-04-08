@@ -79,7 +79,51 @@ async def list_cli_tools():
 
 @router.post("/complete")
 async def complete(req: CompleteRequest, db=Depends(get_db)):
-    """Run a completion on any connected provider."""
+    """Run a completion on any connected provider or CLI tool."""
+    import time as _time
+
+    # Handle CLI tools (Claude Code, Gemini CLI)
+    cli_map = {
+        "Claude Code": "claude",
+        "Gemini CLI": "gemini",
+    }
+    if req.provider in cli_map:
+        binary = cli_map[req.provider]
+        start = _time.time()
+        try:
+            if binary == "claude":
+                proc = await asyncio.create_subprocess_exec(
+                    "claude", "--print", "--model", req.model, req.prompt,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+            else:  # gemini
+                proc = await asyncio.create_subprocess_exec(
+                    "gemini", "--model", req.model, "--prompt", req.prompt,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+            content = (stdout or b"").decode().strip()
+            if not content:
+                content = (stderr or b"").decode().strip()
+            latency = int((_time.time() - start) * 1000)
+            tokens_out = len(content.split())
+            tokens_in = len(req.prompt.split())
+            return {
+                "provider": req.provider,
+                "model": req.model,
+                "content": content or "No response from CLI",
+                "tokens_in": tokens_in,
+                "tokens_out": tokens_out,
+                "cost_usd": 0.0,
+                "latency_ms": latency,
+            }
+        except asyncio.TimeoutError:
+            return {"error": f"{req.provider} timed out after 60s"}
+        except Exception as e:
+            return {"error": f"{req.provider} error: {str(e)}"}
+
     registry = get_registry()
     provider = registry.get(req.provider)
     if not provider:
