@@ -44,7 +44,7 @@ class KnowledgeItem(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     filename = Column(String, nullable=False)
     content = Column(Text, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    item_metadata = Column(JSON, nullable=True)
     indexed_at = Column(DateTime, default=datetime.utcnow)
 
 

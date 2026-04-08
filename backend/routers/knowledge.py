@@ -45,7 +45,7 @@ async def upload_document(file: UploadFile = File(...), db=Depends(get_db)):
     item = KnowledgeItem(
         filename=file.filename,
         content=text,
-        metadata={"size": len(content), "type": file.content_type},
+        item_metadata={"size": len(content), "type": file.content_type},
     )
     db.add(item)
     await db.commit()
@@ -94,7 +94,7 @@ async def list_knowledge(db=Depends(get_db)):
             "filename": item.filename,
             "words": len(item.content.split()),
             "indexed_at": item.indexed_at.isoformat(),
-            "metadata": item.metadata,
+            "metadata": item.item_metadata,
         }
         for item in items
     ]
