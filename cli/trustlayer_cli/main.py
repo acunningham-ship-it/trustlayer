@@ -301,5 +301,126 @@ def workflow_run(
         raise typer.Exit(1)
 
 
+# Knowledge subcommand group
+knowledge_app = typer.Typer(help="Manage and search knowledge base")
+app.add_typer(knowledge_app, name="knowledge")
+
+
+@knowledge_app.command("list")
+def knowledge_list():
+    """List all available knowledge items in the knowledge base."""
+    try:
+        result = api("/api/knowledge/")
+
+        if result.get("items"):
+            table = Table(title="Knowledge Base", show_header=True, header_style="bold cyan")
+            table.add_column("ID", style="cyan")
+            table.add_column("Title")
+            table.add_column("Type", justify="center")
+            table.add_column("Added", justify="right", style="dim")
+
+            for item in result["items"]:
+                table.add_row(
+                    item.get("id", "—"),
+                    item.get("title", "Untitled"),
+                    item.get("type", "document"),
+                    item.get("created_at", "—"),
+                )
+
+            console.print(table)
+            console.print(f"\n[dim]Search knowledge with: trustlayer knowledge search <query>[/dim]")
+            console.print(f"[dim]Upload documents with: trustlayer knowledge upload <file>[/dim]")
+        else:
+            console.print("[yellow]No knowledge items available. Upload a document to get started.[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@knowledge_app.command("search")
+def knowledge_search(
+    query: str = typer.Argument(help="Search query"),
+):
+    """Search the knowledge base for relevant information."""
+    try:
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as p:
+            p.add_task(f"Searching knowledge base...", total=None)
+            result = api("/api/knowledge/search", "POST", {"query": query})
+
+        if result.get("results"):
+            table = Table(title=f"Search Results for '{query}'", show_header=True, header_style="bold cyan")
+            table.add_column("Title", style="cyan")
+            table.add_column("Relevance", justify="right")
+            table.add_column("Source", justify="left", style="dim")
+
+            for item in result["results"]:
+                relevance = item.get("relevance_score", 0)
+                score_color = "green" if relevance >= 0.8 else "yellow" if relevance >= 0.6 else "red"
+                table.add_row(
+                    item.get("title", "Untitled"),
+                    f"[{score_color}]{relevance:.0%}[/{score_color}]",
+                    item.get("source", "unknown"),
+                )
+
+            console.print(table)
+            console.print(f"\n[dim]Results: {len(result['results'])} item(s) found[/dim]")
+        else:
+            console.print("[yellow]No matching knowledge items found.[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@knowledge_app.command("upload")
+def knowledge_upload(
+    file_path: str = typer.Argument(help="Path to the file to upload"),
+    title: Optional[str] = typer.Option(None, "--title", "-t", help="Optional title for the knowledge item"),
+):
+    """Upload a document to the knowledge base."""
+    import os
+
+    file_path_expanded = os.path.expanduser(file_path)
+
+    if not os.path.exists(file_path_expanded):
+        console.print(f"[red]File not found: {file_path}[/red]")
+        raise typer.Exit(1)
+
+    if not os.path.isfile(file_path_expanded):
+        console.print(f"[red]Path is not a file: {file_path}[/red]")
+        raise typer.Exit(1)
+
+    try:
+        # Read file content
+        with open(file_path_expanded, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        file_name = os.path.basename(file_path_expanded)
+        item_title = title or file_name
+
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as p:
+            p.add_task(f"Uploading {file_name}...", total=None)
+            result = api("/api/knowledge/upload", "POST", {
+                "title": item_title,
+                "content": content,
+                "filename": file_name,
+            })
+
+        if result.get("id"):
+            console.print(Panel(
+                f"[green]✓ Knowledge item created[/green]\n\n"
+                f"ID: [bold]{result['id']}[/bold]\n"
+                f"Title: {result.get('title', item_title)}\n"
+                f"Size: {len(content):,} characters",
+                title="[bold]Upload Complete[/bold]",
+                border_style="green",
+            ))
+        else:
+            console.print("[red]Upload failed[/red]")
+            raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":
     app()
