@@ -12,6 +12,42 @@ from ..config import DEFAULT_MONTHLY_BUDGET
 router = APIRouter()
 
 
+@router.get("")
+async def costs_root(db=Depends(get_db)):
+    """Get cost summary (default root endpoint)."""
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # Monthly total
+    result = await db.execute(
+        select(func.sum(CostEntry.cost_usd))
+        .where(CostEntry.recorded_at >= month_start)
+    )
+    monthly_total = result.scalar() or 0.0
+
+    # Per-provider breakdown
+    result = await db.execute(
+        select(CostEntry.provider, func.sum(CostEntry.cost_usd).label("total"))
+        .where(CostEntry.recorded_at >= month_start)
+        .group_by(CostEntry.provider)
+        .order_by(func.sum(CostEntry.cost_usd).desc())
+    )
+    by_provider = [{"provider": r[0], "cost_usd": round(r[1], 4)} for r in result]
+
+    budget = DEFAULT_MONTHLY_BUDGET
+    pct = (monthly_total / budget * 100) if budget > 0 else 0
+
+    return {
+        "month": now.strftime("%B %Y"),
+        "total_usd": round(monthly_total, 4),
+        "budget_usd": budget,
+        "budget_pct": round(pct, 1),
+        "alert": pct >= 80,
+        "alert_message": f"You've spent ${monthly_total:.2f} this month ({pct:.0f}% of your ${budget:.0f} budget)" if pct >= 80 else None,
+        "by_provider": by_provider,
+    }
+
+
 @router.get("/summary")
 async def cost_summary(db=Depends(get_db)):
     """Get cost summary for current month."""

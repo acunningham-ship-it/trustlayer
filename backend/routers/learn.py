@@ -11,6 +11,14 @@ from ..database import get_db, UserProfile
 router = APIRouter()
 
 
+@router.get("")
+async def learn_root(db=Depends(get_db)):
+    """Get the user's learning profile (default root endpoint)."""
+    result = await db.execute(select(UserProfile))
+    items = result.scalars().all()
+    return {item.key: item.value for item in items}
+
+
 class ProfileUpdate(BaseModel):
     key: str
     value: Any
