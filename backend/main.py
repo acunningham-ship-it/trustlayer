@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .database import init_db
-from .routers import connectors, verify, learn, costs, compare, knowledge, workflows, settings, history
+from .routers import connectors, verify, learn, costs, compare, knowledge, workflows, settings, history, router, consistency
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,6 +58,8 @@ app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"]
 app.include_router(workflows.router, prefix="/api/workflows", tags=["workflows"])
 app.include_router(history.router, prefix="/api/history", tags=["history"])
 app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
+app.include_router(router.router, prefix="/api/router", tags=["router"])
+app.include_router(consistency.router, prefix="/api/consistency", tags=["consistency"])
 
 
 @app.get("/")
