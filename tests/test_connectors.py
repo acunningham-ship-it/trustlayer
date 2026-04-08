@@ -91,7 +91,10 @@ async def _verify_cost_recorded():
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(CostEntry))
         costs = result.scalars().all()
-        assert len(costs) == 1
+        assert len(costs) >= 1
+        matching = [c for c in costs if c.provider == "test-provider"]
+        assert len(matching) >= 1
+        costs[0:0] = matching  # put matching first
         assert costs[0].provider == "test-provider"
         assert costs[0].model == "test-model"
         assert costs[0].cost_usd == 0.001

@@ -215,8 +215,12 @@ async def test_all_providers(db=Depends(get_db)):
     from datetime import datetime, timezone
 
     # Get all configured settings from database
-    result = await db.execute(select(UserProfile).filter(UserProfile.key.startswith("settings.")))
-    settings_rows = result.scalars().all()
+    try:
+        result = await db.execute(select(UserProfile).filter(UserProfile.key.startswith("settings.")))
+        settings_rows = result.scalars().all()
+    except Exception:
+        # Database tables don't exist yet, use empty settings
+        settings_rows = []
 
     settings_dict = {}
     for row in settings_rows:

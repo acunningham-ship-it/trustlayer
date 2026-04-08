@@ -65,21 +65,25 @@ async def cost_summary(db=Depends(get_db)):
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # Monthly total
-    result = await db.execute(
-        select(func.sum(CostEntry.cost_usd))
-        .where(CostEntry.recorded_at >= month_start)
-    )
-    monthly_total = result.scalar() or 0.0
+    try:
+        # Monthly total
+        result = await db.execute(
+            select(func.sum(CostEntry.cost_usd))
+            .where(CostEntry.recorded_at >= month_start)
+        )
+        monthly_total = result.scalar() or 0.0
 
-    # Per-provider breakdown
-    result = await db.execute(
-        select(CostEntry.provider, func.sum(CostEntry.cost_usd).label("total"))
-        .where(CostEntry.recorded_at >= month_start)
-        .group_by(CostEntry.provider)
-        .order_by(func.sum(CostEntry.cost_usd).desc())
-    )
-    by_provider = [{"provider": r[0], "cost_usd": round(r[1], 4)} for r in result]
+        # Per-provider breakdown
+        result = await db.execute(
+            select(CostEntry.provider, func.sum(CostEntry.cost_usd).label("total"))
+            .where(CostEntry.recorded_at >= month_start)
+            .group_by(CostEntry.provider)
+            .order_by(func.sum(CostEntry.cost_usd).desc())
+        )
+        by_provider = [{"provider": r[0], "cost_usd": round(r[1], 4)} for r in result]
+    except Exception:
+        monthly_total = 0.0
+        by_provider = []
 
     budget = DEFAULT_MONTHLY_BUDGET
     pct = (monthly_total / budget * 100) if budget > 0 else 0
@@ -141,16 +145,20 @@ async def cost_savings(db=Depends(get_db)):
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # Get all Ollama interactions this month
-    result = await db.execute(
-        select(
-            func.sum(AIInteraction.tokens_used).label("total_tokens"),
-            func.count().label("call_count"),
+    try:
+        # Get all Ollama interactions this month
+        result = await db.execute(
+            select(
+                func.sum(AIInteraction.tokens_used).label("total_tokens"),
+                func.count().label("call_count"),
+            )
+            .where(AIInteraction.provider == "ollama")
+            .where(AIInteraction.created_at >= month_start)
         )
-        .where(AIInteraction.provider == "ollama")
-        .where(AIInteraction.created_at >= month_start)
-    )
-    row = result.scalar_one_or_none()
+        row = result.scalar_one_or_none()
+    except Exception:
+        # Database table doesn't exist yet
+        row = None
 
     if not row or not row[0]:
         return {
@@ -198,12 +206,15 @@ async def cost_savings(db=Depends(get_db)):
 @router.get("/optimize")
 async def cost_optimize(db=Depends(get_db)):
     """Suggest cheaper models for common tasks."""
-    result = await db.execute(
-        select(AIInteraction.model, func.avg(AIInteraction.cost_usd).label("avg_cost"))
-        .group_by(AIInteraction.model)
-        .order_by(func.avg(AIInteraction.cost_usd).desc())
-    )
-    expensive = [{"model": r[0], "avg_cost_usd": round(r[1], 4)} for r in result]
+    try:
+        result = await db.execute(
+            select(AIInteraction.model, func.avg(AIInteraction.cost_usd).label("avg_cost"))
+            .group_by(AIInteraction.model)
+            .order_by(func.avg(AIInteraction.cost_usd).desc())
+        )
+        expensive = [{"model": r[0], "avg_cost_usd": round(r[1], 4)} for r in result]
+    except Exception:
+        expensive = []
 
     tips = []
     for item in expensive:

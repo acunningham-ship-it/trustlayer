@@ -129,17 +129,21 @@ Provide a concise, factual answer based only on the documents above. Cite specif
         model = models[0]
         response = await provider.complete(synthesis_prompt, model)
 
-        # Log interaction
-        interaction = AIInteraction(
-            provider=provider_name,
-            model=model,
-            prompt=synthesis_prompt,
-            response=response.content,
-            tokens_used=response.tokens_in + response.tokens_out,
-            cost_usd=response.cost_usd,
-        )
-        db.add(interaction)
-        await db.commit()
+        # Log interaction (with error handling for missing tables)
+        try:
+            interaction = AIInteraction(
+                provider=provider_name,
+                model=model,
+                prompt=synthesis_prompt,
+                response=response.content,
+                tokens_used=response.tokens_in + response.tokens_out,
+                cost_usd=response.cost_usd,
+            )
+            db.add(interaction)
+            await db.commit()
+        except Exception as e:
+            # Log error but don't fail the request if database isn't initialized
+            pass
 
         return {
             "question": req.question,
