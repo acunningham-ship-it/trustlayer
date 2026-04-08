@@ -50,7 +50,7 @@ class KnowledgeItem(Base):
     filename = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     item_metadata = Column(JSON, nullable=True)
-    indexed_at = Column(DateTime, default=datetime.utcnow)
+    indexed_at = Column(DateTime, default=utc_now)
 
 
 class WorkflowDef(Base):
@@ -73,7 +73,7 @@ class CostEntry(Base):
     tokens_in = Column(Integer, default=0)
     tokens_out = Column(Integer, default=0)
     cost_usd = Column(Float, default=0.0)
-    recorded_at = Column(DateTime, default=datetime.utcnow)
+    recorded_at = Column(DateTime, default=utc_now)
 
 
 engine = create_async_engine(DATABASE_URL, echo=False)

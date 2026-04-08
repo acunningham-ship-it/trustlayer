@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import init_db
-from .routers import connectors, verify, learn, costs, compare, knowledge, workflows
+from .routers import connectors, verify, learn, costs, compare, knowledge, workflows, settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ app.include_router(costs.router, prefix="/api/costs", tags=["costs"])
 app.include_router(compare.router, prefix="/api/compare", tags=["compare"])
 app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"])
 app.include_router(workflows.router, prefix="/api/workflows", tags=["workflows"])
+app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
 
 
 @app.get("/")
