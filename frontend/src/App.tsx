@@ -12,6 +12,7 @@ import Costs from './pages/Costs'
 import Knowledge from './pages/Knowledge'
 import History from './pages/History'
 import Settings from './pages/Settings'
+import AuditLog from './pages/AuditLog'
 import Profile from './pages/Profile'
 
 export default function App() {
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="/costs" element={<Costs />} />
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/history" element={<History />} />
+          <Route path="/audit" element={<AuditLog />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>

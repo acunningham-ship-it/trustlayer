@@ -261,69 +261,6 @@ def learn(
         raise typer.Exit(1)
 
 
-# Workflow subcommand group
-workflow_app = typer.Typer(help="Manage and run workflows")
-app.add_typer(workflow_app, name="workflow")
-
-
-@workflow_app.command("list")
-def workflow_list():
-    """List all available workflows."""
-    try:
-        workflows = api("/api/workflows/")
-        templates = api("/api/workflows/templates")
-
-        if workflows or templates:
-            table = Table(title="Available Workflows", show_header=True, header_style="bold cyan")
-            table.add_column("ID", style="cyan")
-            table.add_column("Name")
-            table.add_column("Steps", justify="center")
-            table.add_column("Status", justify="center")
-
-            # Add saved workflows
-            for w in workflows:
-                status = "[green]enabled[/green]" if w["enabled"] else "[dim]disabled[/dim]"
-                table.add_row(w["id"], w["name"], str(w["steps"]), status)
-
-            # Add templates
-            for t in templates:
-                table.add_row(f"[dim]{t['id']}[/dim]", f"[dim]{t['name']} (template)[/dim]", "—", "[dim]template[/dim]")
-
-            console.print(table)
-            console.print(f"\n[dim]Run workflows with: trustlayer workflow run <id>[/dim]")
-        else:
-            console.print("[yellow]No workflows available. Create one or use templates.[/yellow]")
-    except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
-
-
-@workflow_app.command("run")
-def workflow_run(
-    workflow_id: str = typer.Argument(help="Workflow ID to run"),
-):
-    """Execute a workflow."""
-    try:
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as p:
-            p.add_task(f"Running workflow '{workflow_id}'...", total=None)
-            result = api(f"/api/workflows/{workflow_id}/run", "POST", {})
-
-        if result.get("status") == "completed":
-            console.print(Panel(
-                f"[green]✓ Workflow completed[/green]\n\n"
-                f"Workflow: [bold]{result['name']}[/bold]\n"
-                f"Steps executed: {result['steps_executed']}",
-                title="[bold]Workflow Execution[/bold]",
-                border_style="green",
-            ))
-
-            if result.get("log"):
-                console.print("\n[bold]Execution Log:[/bold]")
-                for step in result["log"]:
-                    console.print(f"  Step {step['step']} [{step['type']}]: {step['output']}")
-        else:
-            console.print(f"[red]Workflow execution failed[/red]")
-            raise typer.Exit(1)
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         raise typer.Exit(1)
