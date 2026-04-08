@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Eye, EyeOff, Check, X, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, Check, X, CheckCircle, Loader } from 'lucide-react'
 
 export default function Settings() {
   const [apiKeys, setApiKeys] = useState({
@@ -32,6 +32,8 @@ export default function Settings() {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [appVersion, setAppVersion] = useState('1.0.0')
   const [dataDirectory, setDataDirectory] = useState('/home/user/.trustlayer')
+  const [isTestingAll, setIsTestingAll] = useState(false)
+  const [testAllResults, setTestAllResults] = useState<Record<string, {status: boolean, latency?: number}> | null>(null)
 
   useEffect(() => {
     // Load settings from API
@@ -109,6 +111,23 @@ export default function Settings() {
       // silent fail — user can retry
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const testAllProviders = async () => {
+    setIsTestingAll(true)
+    setTestAllResults(null)
+    try {
+      const response = await fetch('/api/settings/test-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      const data = await response.json()
+      setTestAllResults(data.results || {})
+    } catch {
+      setTestAllResults({})
+    } finally {
+      setIsTestingAll(false)
     }
   }
 

@@ -8,10 +8,91 @@ import hashlib
 import json
 from urllib.parse import urlparse
 from sqlalchemy.ext.asyncio import AsyncSession
+import asyncio
 
 from ..database import AIInteraction, get_db
+from ..providers.registry import get_registry
 
 router = APIRouter()
+
+
+async def perform_ai_cross_check(claims: List[str], context: str = None) -> dict:
+    """
+    Ask an available AI provider to fact-check suspicious claims.
+    Returns dict with status, ai_assessment, score_adjustment, and provider used.
+    """
+    if not claims:
+        return {"status": "skipped", "reason": "no claims to check"}
+
+    registry = get_registry()
+    if not registry:
+        return {"status": "skipped", "reason": "no AI providers available"}
+
+    # Prefer Ollama (local), then try others
+    provider_order = ["ollama", "anthropic", "openai", "google"]
+    available_provider = None
+
+    for provider_name in provider_order:
+        if provider_name in registry:
+            provider = registry[provider_name]
+            try:
+                if await provider.is_available():
+                    available_provider = (provider_name, provider)
+                    break
+            except Exception:
+                continue
+
+    if not available_provider:
+        return {"status": "skipped", "reason": "no available AI providers"}
+
+    provider_name, provider = available_provider
+
+    # Build a fact-checking prompt
+    claims_text = "\n".join([f"- {claim}" for claim in claims[:5]])
+    prompt = f"""You are a fact-checking assistant. Review these claims extracted from AI-generated content and assess their credibility:
+
+{claims_text}
+
+Context: {context or 'No context provided'}
+
+For each claim, provide:
+1. Whether it appears plausible/verifiable
+2. Any red flags or concerns
+3. Overall assessment: likely accurate, questionable, or suspicious
+
+Keep response concise."""
+
+    try:
+        # Get the first available model
+        models = await provider.list_models()
+        if not models:
+            return {"status": "error", "reason": "no models available"}
+
+        model = models[0]
+        response = await provider.complete(prompt, model)
+
+        # Parse response for credibility assessment
+        assessment = response.content.lower()
+        score_adjustment = 0
+
+        # Simple heuristic: if response mentions "suspicious", "unlikely", "red flags", penalize
+        if any(word in assessment for word in ["suspicious", "unlikely", "red flag", "questionable", "problematic"]):
+            score_adjustment = -10
+        # If mentions "plausible", "likely", "credible", bonus
+        elif any(word in assessment for word in ["plausible", "likely accurate", "credible", "verified"]):
+            score_adjustment = 5
+
+        return {
+            "status": "success",
+            "provider": provider_name,
+            "model": model,
+            "assessment": response.content,
+            "score_adjustment": score_adjustment,
+            "latency_ms": response.latency_ms,
+        }
+
+    except Exception as e:
+        return {"status": "error", "reason": str(e)}
 
 
 class VerifyRequest(BaseModel):
@@ -344,6 +425,17 @@ async def verify_content(req: VerifyRequest, db: AsyncSession = Depends(get_db))
     scorer = TrustScore(req.content, req.context)
     result = scorer.compute()
 
+    # Perform AI cross-check if trust score is low
+    ai_cross_check = None
+    if result["score"] < 70:
+        claims = result.get("claims", [])
+        ai_cross_check = await perform_ai_cross_check(claims, req.context)
+
+        # Apply score adjustment from AI assessment if successful
+        if ai_cross_check.get("status") == "success":
+            adjustment = ai_cross_check.get("score_adjustment", 0)
+            result["score"] = max(0, min(100, result["score"] + adjustment))
+
     interaction = AIInteraction(
         provider="trustlayer",
         model="verify",
@@ -375,6 +467,7 @@ async def verify_content(req: VerifyRequest, db: AsyncSession = Depends(get_db))
             "has_proper_citations": sources.get("has_citations", False),
         },
         "hallucination_score": 100 - result["score"],
+        "ai_cross_check": ai_cross_check,
     }
 
 

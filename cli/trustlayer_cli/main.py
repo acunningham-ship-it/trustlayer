@@ -3,6 +3,7 @@
 import typer
 import httpx
 import json
+import sys
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
