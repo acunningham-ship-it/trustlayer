@@ -19,33 +19,35 @@ export default function Costs() {
       </div>
 
       {summary && (
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white dark:bg-stone-900 rounded-xl border p-5">
-            <div className="text-xs text-stone-500 uppercase tracking-wider mb-1">{summary.month}</div>
-            <div className="text-3xl font-bold text-stone-900 dark:text-stone-100">${summary.total_usd.toFixed(2)}</div>
-            <div className="text-sm text-stone-400 mt-1">of ${summary.budget_usd} budget</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className={`rounded-xl border p-6 ${summary.alert ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800'}`}>
+            <div className={`text-xs uppercase tracking-wider font-medium mb-2 ${summary.alert ? 'text-amber-600 dark:text-amber-400' : 'text-stone-500 dark:text-stone-400'}`}>{summary.month}</div>
+            <div className="text-4xl font-bold text-stone-900 dark:text-stone-100">${summary.total_usd.toFixed(2)}</div>
+            <div className={`text-sm mt-2 ${summary.alert ? 'text-amber-600 dark:text-amber-400/75' : 'text-stone-600 dark:text-stone-400'}`}>of ${summary.budget_usd} budget</div>
           </div>
-          <div className="bg-white dark:bg-stone-900 rounded-xl border p-5">
-            <div className="text-xs text-stone-500 uppercase tracking-wider mb-2">Budget used</div>
-            <div className="h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full ${summary.alert ? 'bg-amber-500' : 'bg-green-500'}`}
-                style={{ width: `${Math.min(100, summary.budget_pct)}%` }}
-              />
+          <div className={`rounded-xl border p-6 ${summary.alert ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800' : 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800'}`}>
+            <div className={`text-xs uppercase tracking-wider font-medium mb-3 ${summary.alert ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>Budget used</div>
+            <div className="space-y-2">
+              <div className="h-3 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${summary.alert ? 'bg-amber-500' : 'bg-green-500'}`}
+                  style={{ width: `${Math.min(100, summary.budget_pct)}%` }}
+                />
+              </div>
+              <div className={`text-2xl font-bold ${summary.alert ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>{summary.budget_pct}%</div>
             </div>
-            <div className="text-sm text-stone-500 mt-2">{summary.budget_pct}%</div>
           </div>
         </div>
       )}
 
       {summary?.by_provider?.length > 0 && (
-        <div className="bg-white dark:bg-stone-900 rounded-xl border p-6 mb-4">
-          <h2 className="font-medium text-stone-800 dark:text-stone-200 mb-4">By Provider</h2>
-          <div className="space-y-2">
+        <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6 mb-6">
+          <h2 className="font-semibold text-stone-900 dark:text-stone-100 mb-5">Spending by Provider</h2>
+          <div className="space-y-3">
             {summary.by_provider.map((p: any) => (
-              <div key={p.provider} className="flex justify-between text-sm">
-                <span className="capitalize text-stone-600 dark:text-stone-400">{p.provider}</span>
-                <span className="text-stone-800 dark:text-stone-200">${p.cost_usd.toFixed(4)}</span>
+              <div key={p.provider} className="flex items-center justify-between p-3 hover:bg-stone-50 dark:hover:bg-stone-800/50 rounded-lg transition-colors">
+                <span className="capitalize text-sm font-medium text-stone-700 dark:text-stone-300">{p.provider}</span>
+                <span className="text-sm font-semibold text-stone-900 dark:text-stone-100">${p.cost_usd.toFixed(4)}</span>
               </div>
             ))}
           </div>
@@ -53,19 +55,24 @@ export default function Costs() {
       )}
 
       {tips.length > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-5">
-          <h2 className="font-medium text-amber-800 dark:text-amber-400 mb-3">Optimization Tips</h2>
-          <ul className="space-y-1.5">
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-6 mb-6">
+          <h2 className="font-semibold text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2">
+            💡 Optimization Tips
+          </h2>
+          <ul className="space-y-2">
             {tips.map((tip, i) => (
-              <li key={i} className="text-sm text-amber-700 dark:text-amber-500">• {tip}</li>
+              <li key={i} className="text-sm text-blue-700 dark:text-blue-400 flex items-start gap-2">
+                <span className="flex-shrink-0">•</span>
+                <span>{tip}</span>
+              </li>
             ))}
           </ul>
         </div>
       )}
 
       {summary && summary.total_usd === 0 && (
-        <div className="bg-stone-50 dark:bg-stone-900/50 rounded-xl border border-stone-200 dark:border-stone-800 p-8 text-center">
-          <p className="text-stone-500">No spending recorded yet. Start using AI through TrustLayer to track costs.</p>
+        <div className="bg-stone-50 dark:bg-stone-900/50 rounded-xl border border-stone-200 dark:border-stone-800 p-12 text-center">
+          <p className="text-stone-600 dark:text-stone-400 text-sm">No spending recorded yet. Start using AI through TrustLayer to track costs.</p>
         </div>
       )}
     </div>

@@ -46,65 +46,91 @@ export default function Knowledge() {
         <p className="text-stone-500 mt-1">Your docs and notes, indexed locally. AI uses your context.</p>
       </div>
 
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="flex items-center gap-2 px-4 py-2 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-40"
-        >
-          <Upload className="h-4 w-4" />
-          {uploading ? 'Uploading...' : 'Upload Document'}
-        </button>
-        <input ref={fileRef} type="file" className="hidden" onChange={upload} accept=".txt,.md,.pdf,.py,.js,.ts" />
-      </div>
+      <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6 mb-6 sticky top-8">
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400 font-medium block mb-3">
+              Upload documents
+            </label>
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-2 px-4 py-3 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-40 transition-all w-full justify-center"
+            >
+              <Upload className="h-4 w-4" />
+              {uploading ? 'Uploading...' : 'Upload Document'}
+            </button>
+            <input ref={fileRef} type="file" className="hidden" onChange={upload} accept=".txt,.md,.pdf,.py,.js,.ts" />
+            <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">Supported: TXT, MD, PDF, PY, JS, TS</p>
+          </div>
 
-      <div className="flex gap-2 mb-6">
-        <input
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && search()}
-          placeholder="Search your knowledge base..."
-          className="flex-1 px-4 py-2 text-sm border border-stone-200 dark:border-stone-700 rounded-lg bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-stone-600"
-        />
-        <button
-          onClick={search}
-          className="px-4 py-2 border border-stone-200 dark:border-stone-700 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800"
-        >
-          <Search className="h-4 w-4 text-stone-500" />
-        </button>
+          <div className="border-t border-stone-100 dark:border-stone-800 pt-4">
+            <label className="text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400 font-medium block mb-3">
+              Search documents
+            </label>
+            <div className="flex gap-2">
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && search()}
+                placeholder="Search your knowledge base..."
+                className="flex-1 px-3 py-2 text-sm border border-stone-200 dark:border-stone-700 rounded-lg bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-stone-600"
+              />
+              <button
+                onClick={search}
+                className="px-3 py-2 border border-stone-200 dark:border-stone-700 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              >
+                <Search className="h-4 w-4 text-stone-500" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {results.length > 0 && (
         <div className="mb-6 space-y-3">
-          <h2 className="text-sm font-medium text-stone-700 dark:text-stone-300">Search results</h2>
+          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+            <Search className="h-4 w-4 text-stone-500" />
+            Search results ({results.length})
+          </h2>
           {results.map(r => (
-            <div key={r.id} className="bg-white dark:bg-stone-900 rounded-xl border p-4">
-              <div className="text-xs font-medium text-stone-600 dark:text-stone-400 mb-1">{r.filename}</div>
-              <p className="text-sm text-stone-700 dark:text-stone-300">...{r.snippet}...</p>
+            <div key={r.id} className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-4 hover:shadow-lg transition-shadow">
+              <div className="text-xs font-semibold text-stone-600 dark:text-stone-400 mb-2 uppercase tracking-wider">{r.filename}</div>
+              <p className="text-sm text-stone-700 dark:text-stone-300 italic">...{r.snippet}...</p>
             </div>
           ))}
         </div>
       )}
 
-      <div className="space-y-2">
+      <div>
+        <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4 flex items-center gap-2">
+          <BookOpen className="h-4 w-4 text-stone-500" />
+          Documents ({items.length})
+        </h2>
         {items.length === 0 ? (
-          <div className="text-center py-12 text-stone-400">
-            <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No documents indexed yet.</p>
-            <p className="text-xs mt-1">Upload docs, notes, PDFs, or code to get started.</p>
+          <div className="text-center py-16 bg-stone-50 dark:bg-stone-900/50 rounded-xl border border-stone-200 dark:border-stone-800">
+            <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-20" />
+            <p className="text-sm text-stone-600 dark:text-stone-400 font-medium">No documents indexed yet.</p>
+            <p className="text-xs text-stone-500 dark:text-stone-500 mt-1">Upload docs, notes, PDFs, or code to get started.</p>
           </div>
         ) : (
-          items.map(item => (
-            <div key={item.id} className="flex items-center justify-between bg-white dark:bg-stone-900 rounded-xl border px-4 py-3">
-              <div>
-                <div className="text-sm font-medium text-stone-700 dark:text-stone-300">{item.filename}</div>
-                <div className="text-xs text-stone-400">{item.words} words</div>
+          <div className="space-y-2">
+            {items.map(item => (
+              <div key={item.id} className="flex items-center justify-between bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 px-4 py-3 hover:shadow-lg transition-shadow hover:bg-stone-50 dark:hover:bg-stone-800/50">
+                <div>
+                  <div className="text-sm font-medium text-stone-900 dark:text-stone-100">{item.filename}</div>
+                  <div className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{item.words.toLocaleString()} words</div>
+                </div>
+                <button
+                  onClick={() => remove(item.id)}
+                  className="text-stone-400 dark:text-stone-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                  aria-label="Delete document"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
-              <button onClick={() => remove(item.id)} className="text-stone-300 hover:text-red-500 transition-colors">
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>
