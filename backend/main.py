@@ -4,14 +4,24 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from .database import init_db
 from .routers import connectors, verify, learn, costs, compare, knowledge, workflows, settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class RemoveTrailingSlashMiddleware(BaseHTTPMiddleware):
+    """Normalize URLs by removing trailing slashes and re-routing."""
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path != "/" and request.url.path.endswith("/"):
+            new_path = request.url.path.rstrip("/")
+            request.scope["path"] = new_path
+        return await call_next(request)
 
 
 @asynccontextmanager
@@ -27,6 +37,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(RemoveTrailingSlashMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

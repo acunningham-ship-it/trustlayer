@@ -83,7 +83,7 @@ async def search_knowledge(q: str, limit: int = 5, db=Depends(get_db)):
     return scored[:limit]
 
 
-@router.get("/")
+@router.get("")
 async def list_knowledge(db=Depends(get_db)):
     """List all indexed documents."""
     result = await db.execute(select(KnowledgeItem))

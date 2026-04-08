@@ -224,7 +224,7 @@ class TrustScore:
             return "low"
 
 
-@router.post("/")
+@router.post("")
 async def verify_content(req: VerifyRequest, db: AsyncSession = Depends(get_db)):
     """Run full verification on AI-generated content."""
     scorer = TrustScore(req.content, req.context)

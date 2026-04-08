@@ -21,7 +21,7 @@ class CompareRequest(BaseModel):
     max_tokens: Optional[int] = 1024
 
 
-@router.post("/")
+@router.post("")
 async def compare_models(req: CompareRequest, db: AsyncSession = Depends(get_db)):
     """Run the same prompt across multiple models and compare results."""
     registry = get_registry()

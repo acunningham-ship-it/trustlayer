@@ -58,7 +58,7 @@ async def list_templates():
     return TEMPLATES
 
 
-@router.post("/")
+@router.post("")
 async def create_workflow(workflow: WorkflowCreate, db=Depends(get_db)):
     """Create a new workflow."""
     w = WorkflowDef(
@@ -72,7 +72,7 @@ async def create_workflow(workflow: WorkflowCreate, db=Depends(get_db)):
     return {"id": w.id, "name": w.name, "created": True}
 
 
-@router.get("/")
+@router.get("")
 async def list_workflows(db=Depends(get_db)):
     """List all workflows."""
     result = await db.execute(select(WorkflowDef))
