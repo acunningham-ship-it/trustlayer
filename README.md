@@ -196,4 +196,4 @@ Issues and PRs are welcome. TrustLayer is MIT licensed — use it, fork it, buil
 
 MIT — free to use, modify, and distribute.
 
-*Built for the AI Builder Challenge 2026.*
+**
