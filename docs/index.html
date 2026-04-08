@@ -627,7 +627,7 @@
 
       <div id="install" class="code-pane active">
         <pre><span class="cm"># Install TrustLayer</span>
-<span class="fn">pip</span> install trustlayer
+<span class="fn">pip</span> install git+https://github.com/acunningham-ship-it/trustlayer.git
 
 <span class="cm"># Start the server + web UI</span>
 <span class="fn">trustlayer</span> server
@@ -844,7 +844,7 @@ comparison = requests.<span class="fn">post</span>(<span class="str">"http://loc
 
     // Copy install command
     function copyInstall(el) {
-      navigator.clipboard.writeText('pip install trustlayer && trustlayer server').catch(() => {});
+      navigator.clipboard.writeText('pip install git+https://github.com/acunningham-ship-it/trustlayer.git && trustlayer server').catch(() => {});
       const copy = el.querySelector('.install-copy');
       if (copy) { copy.textContent = 'copied!'; setTimeout(() => copy.textContent = 'copy', 2000); }
     }
