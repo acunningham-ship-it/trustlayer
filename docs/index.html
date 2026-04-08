@@ -389,31 +389,29 @@
 
       <div class="demo-grid">
         <div class="demo-card">
-          <div class="demo-card-label">AI Response — Claude Sonnet</div>
-          <p>"The global average temperature has risen by 1.1°C since pre-industrial times. Studies definitively show this will lead to a 100% increase in extreme weather events by 2050, affecting every region on Earth without exception."</p>
+          <div class="demo-card-label">AI Response — Overconfident claim <span style="font-weight:400;color:var(--stone-400);font-size:0.625rem;margin-left:0.5rem;">real output from /api/verify</span></div>
+          <p>"There are definitely 100% more jobs created by AI than lost. Every single economist agrees. The truth is AI will certainly create infinite wealth for everyone by 2025."</p>
           <div class="trust-result">
-            <div class="score-ring score-med">71</div>
+            <div class="score-ring score-high">85</div>
             <div class="trust-detail">
-              <strong>Medium trust — 2 concerns flagged</strong>
+              <strong>High trust — 1 concern flagged</strong>
               <div class="flags">
-                <span class="flag flag-ok">✓ Core statistic verified</span>
-                <span class="flag flag-warn">⚠ Absolute language detected</span>
-                <span class="flag flag-warn">⚠ "100%" statistic unverified</span>
+                <span class="flag flag-warn">⚠ High confidence language with no hedging — may be overconfident</span>
               </div>
             </div>
           </div>
         </div>
         <div class="demo-card">
-          <div class="demo-card-label">AI Response — GPT-4.1</div>
-          <p>"The Earth is approximately 4.5 billion years old, based on radiometric dating of meteorites and the oldest known Earth rocks. This estimate has been consistent across multiple independent dating methods."</p>
+          <div class="demo-card-label">AI Response — Cited claim <span style="font-weight:400;color:var(--stone-400);font-size:0.625rem;margin-left:0.5rem;">real output from /api/verify</span></div>
+          <p>"Research suggests that regular exercise may reduce heart disease risk by approximately 30–35%, though individual results vary. According to WHO guidelines, 150 minutes per week of moderate activity is the baseline."</p>
           <div class="trust-result">
-            <div class="score-ring score-high">94</div>
+            <div class="score-ring score-high">88</div>
             <div class="trust-detail">
-              <strong>High trust — well sourced</strong>
+              <strong>High trust — 2 sources cited</strong>
               <div class="flags">
-                <span class="flag flag-ok">✓ Fact verified</span>
-                <span class="flag flag-ok">✓ Sources cited</span>
-                <span class="flag flag-ok">✓ Qualified language</span>
+                <span class="flag flag-ok">✓ Hedged language used</span>
+                <span class="flag flag-ok">✓ 2 citations detected</span>
+                <span class="flag flag-warn">⚠ Verify specific statistic independently</span>
               </div>
             </div>
           </div>
@@ -563,12 +561,13 @@
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{"content": "Your AI output here"}'</span>
 
-<span class="cm"># Response:</span>
+<span class="cm"># Actual response:</span>
 {
-  <span class="str">"trust_score"</span>: <span class="num">87</span>,
+  <span class="str">"trust_score"</span>: <span class="num">85</span>,
   <span class="str">"trust_label"</span>: <span class="str">"high"</span>,
-  <span class="str">"summary"</span>: <span class="str">"87% trusted. 0 concerns flagged."</span>,
-  <span class="str">"issues"</span>: []
+  <span class="str">"summary"</span>: <span class="str">"85% trusted. 1 concern(s) flagged. 0 source(s) cited."</span>,
+  <span class="str">"issues"</span>: [<span class="str">"High confidence language with no hedging"</span>],
+  <span class="str">"hallucination_score"</span>: <span class="num">15</span>
 }
 
 <span class="cm"># Compare models on the same prompt</span>
