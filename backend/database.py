@@ -76,6 +76,26 @@ class CostEntry(Base):
     recorded_at = Column(DateTime, default=utc_now)
 
 
+
+class ProxyLog(Base):
+    __tablename__ = "proxy_logs"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    timestamp = Column(DateTime, default=utc_now)
+    source_ip = Column(String)
+    user_agent = Column(String)
+    model = Column(String, nullable=False)
+    provider = Column(String, nullable=False)
+    prompt_tokens = Column(Integer, default=0)
+    completion_tokens = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+    cost_usd = Column(Float, default=0.0)
+    latency_ms = Column(Integer, default=0)
+    status_code = Column(Integer, default=200)
+    error = Column(String, nullable=True)
+    streamed = Column(Boolean, default=False)
+
+
 engine = create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

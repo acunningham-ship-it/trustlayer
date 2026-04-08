@@ -432,5 +432,22 @@ def knowledge_upload(
         raise typer.Exit(1)
 
 
+
+
+@app.command()
+def proxy():
+    """Show how to route all AI traffic through TrustLayer."""
+    console.print(Panel(
+        "[bold]Set this environment variable to route all AI traffic through TrustLayer:[/bold]\n\n"
+        "  [cyan]export OPENAI_BASE_URL=http://localhost:8000/v1[/cyan]\n\n"
+        "Once set, any tool using the OpenAI SDK (Cursor, Continue, Aider, etc.)\n"
+        "will automatically flow through TrustLayer for logging, cost tracking,\n"
+        "and smart routing.\n\n"
+        "[dim]To verify it works:[/dim]\n"
+        "  curl http://localhost:8000/v1/models",
+        title="[bold green]TrustLayer Proxy[/bold green]",
+        border_style="green",
+    ))
+
 if __name__ == "__main__":
     app()
