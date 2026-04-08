@@ -5,7 +5,11 @@ from pydantic import BaseModel
 from typing import Optional, List
 import re
 import hashlib
+import json
 from urllib.parse import urlparse
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..database import AIInteraction, get_db
 
 router = APIRouter()
 
@@ -221,10 +225,23 @@ class TrustScore:
 
 
 @router.post("/")
-async def verify_content(req: VerifyRequest):
+async def verify_content(req: VerifyRequest, db: AsyncSession = Depends(get_db)):
     """Run full verification on AI-generated content."""
     scorer = TrustScore(req.content, req.context)
     result = scorer.compute()
+
+    # Record AIInteraction for analytics
+    interaction = AIInteraction(
+        provider="trustlayer",
+        model="verify",
+        prompt=req.content,
+        response=json.dumps(result),
+        trust_score=result["score"],
+        tokens_used=result["word_count"],
+        cost_usd=0.0,
+    )
+    db.add(interaction)
+    await db.commit()
 
     claims = result.get("claims", [])
     sources = result.get("sources", {})
@@ -249,11 +266,25 @@ async def verify_content(req: VerifyRequest):
 
 
 @router.post("/batch")
-async def verify_batch(items: list[VerifyRequest]):
+async def verify_batch(items: list[VerifyRequest], db: AsyncSession = Depends(get_db)):
     """Verify multiple responses (for model comparison)."""
     results = []
     for item in items:
         scorer = TrustScore(item.content, item.context)
         result = scorer.compute()
+
+        # Record AIInteraction for analytics
+        interaction = AIInteraction(
+            provider="trustlayer",
+            model="verify",
+            prompt=item.content,
+            response=json.dumps(result),
+            trust_score=result["score"],
+            tokens_used=result["word_count"],
+            cost_usd=0.0,
+        )
+        db.add(interaction)
         results.append(result)
+
+    await db.commit()
     return results

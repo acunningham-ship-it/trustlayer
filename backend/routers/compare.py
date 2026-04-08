@@ -1,13 +1,16 @@
 """Model Comparison — test your tasks against multiple models."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
 import asyncio
 import time
+import json
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..providers.registry import get_registry
 from ..routers.verify import TrustScore
+from ..database import AIInteraction, get_db
 
 router = APIRouter()
 
@@ -19,7 +22,7 @@ class CompareRequest(BaseModel):
 
 
 @router.post("/")
-async def compare_models(req: CompareRequest):
+async def compare_models(req: CompareRequest, db: AsyncSession = Depends(get_db)):
     """Run the same prompt across multiple models and compare results."""
     registry = get_registry()
     results = []
@@ -49,6 +52,22 @@ async def compare_models(req: CompareRequest):
 
     tasks = [run_one(p["provider"], p["model"]) for p in req.providers]
     results = await asyncio.gather(*tasks)
+
+    # Record AIInteraction for each successful comparison
+    for result in results:
+        if "error" not in result:
+            interaction = AIInteraction(
+                provider=result["provider"],
+                model=result["model"],
+                prompt=req.prompt,
+                response=result["content"],
+                trust_score=result["trust_score"],
+                tokens_used=result["tokens_out"],
+                cost_usd=result["cost_usd"],
+            )
+            db.add(interaction)
+
+    await db.commit()
 
     # Rank by trust score desc, then latency asc
     valid = [r for r in results if "error" not in r]
