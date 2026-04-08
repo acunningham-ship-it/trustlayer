@@ -9,8 +9,8 @@ from ..config import OLLAMA_BASE_URL
 class OllamaProvider(BaseProvider):
     name = "ollama"
 
-    def __init__(self):
-        self.base_url = OLLAMA_BASE_URL
+    def __init__(self, base_url: str = ""):
+        self.base_url = base_url or OLLAMA_BASE_URL
 
     async def is_available(self) -> bool:
         try:

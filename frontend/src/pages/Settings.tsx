@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Eye, EyeOff, Check, X } from 'lucide-react'
+import { Eye, EyeOff, Check, X, CheckCircle } from 'lucide-react'
 
 export default function Settings() {
   const [apiKeys, setApiKeys] = useState({
@@ -8,6 +8,17 @@ export default function Settings() {
     google: '',
     ollamaBaseUrl: ''
   })
+
+  // Track which keys are already configured (so we can show badge without exposing full key)
+  const [configured, setConfigured] = useState({
+    anthropic: false,
+    openai: false,
+    google: false,
+    ollama: false,
+  })
+
+  // Track which key fields have been edited by the user this session
+  const [edited, setEdited] = useState<Record<string, boolean>>({})
 
   const [visibleKeys, setVisibleKeys] = useState({
     anthropic: false,
@@ -18,6 +29,7 @@ export default function Settings() {
   const [budget, setBudget] = useState<number | null>(null)
   const [testResults, setTestResults] = useState<Record<string, boolean | null>>({})
   const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [appVersion, setAppVersion] = useState('1.0.0')
   const [dataDirectory, setDataDirectory] = useState('/home/user/.trustlayer')
 
@@ -26,6 +38,9 @@ export default function Settings() {
     fetch('/api/settings').then(r => r.json()).then(settings => {
       if (settings.apiKeys) {
         setApiKeys(settings.apiKeys)
+      }
+      if (settings.configured) {
+        setConfigured(settings.configured)
       }
       if (settings.budget) {
         setBudget(settings.budget)
@@ -47,20 +62,14 @@ export default function Settings() {
   }
 
   const handleKeyChange = (provider: string, value: string) => {
-    setApiKeys(prev => ({
-      ...prev,
-      [provider]: value
-    }))
+    setApiKeys(prev => ({ ...prev, [provider]: value }))
+    setEdited(prev => ({ ...prev, [provider]: true }))
   }
 
   const testProvider = async (provider: string) => {
-    setTestResults(prev => ({
-      ...prev,
-      [provider]: null
-    }))
-
+    setTestResults(prev => ({ ...prev, [provider]: null }))
     try {
-      const response = await fetch(`/api/test-provider/${provider}`, {
+      const response = await fetch(`/api/settings/test-provider/${provider}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -68,37 +77,36 @@ export default function Settings() {
           baseUrl: provider === 'ollama' ? apiKeys.ollamaBaseUrl : undefined
         })
       })
-
-      const success = response.ok
-      setTestResults(prev => ({
-        ...prev,
-        [provider]: success
-      }))
+      const data = await response.json()
+      setTestResults(prev => ({ ...prev, [provider]: data.status === true }))
     } catch {
-      setTestResults(prev => ({
-        ...prev,
-        [provider]: false
-      }))
+      setTestResults(prev => ({ ...prev, [provider]: false }))
     }
   }
 
   const saveSettings = async () => {
     setIsSaving(true)
+    setSaveSuccess(false)
     try {
+      // Only send keys that were actually edited this session
+      // (avoid saving masked placeholder values back)
+      const keysToSend: Record<string, string> = {}
+      for (const [k, v] of Object.entries(apiKeys)) {
+        if (edited[k]) keysToSend[k] = v
+      }
+      // Always include ollamaBaseUrl if it was edited
       const response = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          apiKeys,
-          budget
-        })
+        body: JSON.stringify({ apiKeys: keysToSend, budget })
       })
-
       if (response.ok) {
-        // Success message could go here
+        setSaveSuccess(true)
+        setEdited({})
+        setTimeout(() => setSaveSuccess(false), 3000)
       }
     } catch {
-      // Error handling
+      // silent fail — user can retry
     } finally {
       setIsSaving(false)
     }
@@ -116,116 +124,68 @@ export default function Settings() {
         <h2 className="font-semibold text-stone-900 dark:text-stone-100 mb-6 text-lg">AI Providers</h2>
 
         <div className="space-y-6">
-          {/* Anthropic */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-              Anthropic API Key
-            </label>
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <input
-                  type={visibleKeys.anthropic ? 'text' : 'password'}
-                  value={apiKeys.anthropic}
-                  onChange={(e) => handleKeyChange('anthropic', e.target.value)}
-                  className="w-full px-3 py-2 border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 rounded-lg text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 text-sm"
-                  placeholder="sk-ant-..."
-                />
-                <button
-                  onClick={() => toggleKeyVisibility('anthropic')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                >
-                  {visibleKeys.anthropic ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+          {/* Reusable provider row renderer */}
+          {([
+            { id: 'anthropic', label: 'Anthropic API Key', placeholder: 'sk-ant-...', secret: true },
+            { id: 'openai', label: 'OpenAI API Key', placeholder: 'sk-...', secret: true },
+            { id: 'google', label: 'Google API Key', placeholder: 'AIza...', secret: true },
+          ] as const).map(({ id, label, placeholder, secret }) => (
+            <div key={id} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  {label}
+                </label>
+                {configured[id] && !edited[id] && (
+                  <span className="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
+                    <CheckCircle className="h-3 w-3" /> Configured
+                  </span>
+                )}
               </div>
-              <button
-                onClick={() => testProvider('anthropic')}
-                className="px-4 py-2 border border-stone-300 dark:border-stone-700 rounded-lg text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-              >
-                Test
-              </button>
-              {testResults.anthropic !== null && (
-                <div className={`flex items-center ${testResults.anthropic ? 'text-green-600' : 'text-red-600'}`}>
-                  {testResults.anthropic ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <input
+                    type={secret && !visibleKeys[id as keyof typeof visibleKeys] ? 'password' : 'text'}
+                    value={apiKeys[id as keyof typeof apiKeys]}
+                    onChange={(e) => handleKeyChange(id, e.target.value)}
+                    className="w-full px-3 py-2 border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 rounded-lg text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 text-sm"
+                    placeholder={configured[id] && !edited[id] ? '••••••••••••' : placeholder}
+                  />
+                  {secret && (
+                    <button
+                      onClick={() => toggleKeyVisibility(id)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+                    >
+                      {visibleKeys[id as keyof typeof visibleKeys] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* OpenAI */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-              OpenAI API Key
-            </label>
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <input
-                  type={visibleKeys.openai ? 'text' : 'password'}
-                  value={apiKeys.openai}
-                  onChange={(e) => handleKeyChange('openai', e.target.value)}
-                  className="w-full px-3 py-2 border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 rounded-lg text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 text-sm"
-                  placeholder="sk-..."
-                />
                 <button
-                  onClick={() => toggleKeyVisibility('openai')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+                  onClick={() => testProvider(id)}
+                  className="px-4 py-2 border border-stone-300 dark:border-stone-700 rounded-lg text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
                 >
-                  {visibleKeys.openai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  Test
                 </button>
+                {testResults[id] !== undefined && testResults[id] !== null && (
+                  <div className={`flex items-center ${testResults[id] ? 'text-green-600' : 'text-red-600'}`}>
+                    {testResults[id] ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => testProvider('openai')}
-                className="px-4 py-2 border border-stone-300 dark:border-stone-700 rounded-lg text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-              >
-                Test
-              </button>
-              {testResults.openai !== null && (
-                <div className={`flex items-center ${testResults.openai ? 'text-green-600' : 'text-red-600'}`}>
-                  {testResults.openai ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
-                </div>
-              )}
             </div>
-          </div>
-
-          {/* Google */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-              Google API Key
-            </label>
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <input
-                  type={visibleKeys.google ? 'text' : 'password'}
-                  value={apiKeys.google}
-                  onChange={(e) => handleKeyChange('google', e.target.value)}
-                  className="w-full px-3 py-2 border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 rounded-lg text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 text-sm"
-                  placeholder="AIza..."
-                />
-                <button
-                  onClick={() => toggleKeyVisibility('google')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                >
-                  {visibleKeys.google ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <button
-                onClick={() => testProvider('google')}
-                className="px-4 py-2 border border-stone-300 dark:border-stone-700 rounded-lg text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-              >
-                Test
-              </button>
-              {testResults.google !== null && (
-                <div className={`flex items-center ${testResults.google ? 'text-green-600' : 'text-red-600'}`}>
-                  {testResults.google ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
-                </div>
-              )}
-            </div>
-          </div>
+          ))}
 
           {/* Ollama */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-              Ollama Base URL
-            </label>
+            <div className="flex items-center gap-2">
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                Ollama Base URL
+              </label>
+              {configured.ollama && (
+                <span className="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
+                  <CheckCircle className="h-3 w-3" /> Detected
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -240,7 +200,7 @@ export default function Settings() {
               >
                 Test
               </button>
-              {testResults.ollama !== null && (
+              {testResults.ollama !== undefined && testResults.ollama !== null && (
                 <div className={`flex items-center ${testResults.ollama ? 'text-green-600' : 'text-red-600'}`}>
                   {testResults.ollama ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
                 </div>
@@ -312,7 +272,7 @@ export default function Settings() {
       </div>
 
       {/* Save Button */}
-      <div className="flex gap-3">
+      <div className="flex items-center gap-4">
         <button
           onClick={saveSettings}
           disabled={isSaving}
@@ -320,6 +280,11 @@ export default function Settings() {
         >
           {isSaving ? 'Saving...' : 'Save Settings'}
         </button>
+        {saveSuccess && (
+          <span className="flex items-center gap-1.5 text-sm text-green-700 dark:text-green-400">
+            <CheckCircle className="h-4 w-4" /> Settings saved
+          </span>
+        )}
       </div>
     </div>
   )

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from ..database import get_db, UserProfile
+from ..providers.registry import rebuild_registry
 
 router = APIRouter()
 
@@ -28,17 +29,31 @@ class ProviderTest(BaseModel):
     baseUrl: str | None = None
 
 
+def _mask_key(key: str) -> str:
+    """Mask an API key for display — show first 8 chars then ****."""
+    if not key:
+        return ""
+    visible = min(8, len(key) // 2)
+    return key[:visible] + "****"
+
+
 @router.get("")
 async def get_settings(db=Depends(get_db)):
-    """Get current configuration settings (apiKeys and budget)."""
-    settings = {
+    """Get current configuration settings (apiKeys masked and budget)."""
+    settings: dict = {
         "apiKeys": {
             "anthropic": "",
             "openai": "",
             "google": "",
             "ollamaBaseUrl": ""
         },
-        "budget": None
+        "configured": {
+            "anthropic": False,
+            "openai": False,
+            "google": False,
+            "ollama": False,
+        },
+        "budget": None,
     }
 
     # Fetch all settings from database
@@ -52,13 +67,21 @@ async def get_settings(db=Depends(get_db)):
         if setting_name == "budget":
             settings["budget"] = value.get("value") if isinstance(value, dict) else value
         elif setting_name == "anthropic_key":
-            settings["apiKeys"]["anthropic"] = value.get("value", "") if isinstance(value, dict) else ""
+            raw = value.get("value", "") if isinstance(value, dict) else ""
+            settings["apiKeys"]["anthropic"] = _mask_key(raw)
+            settings["configured"]["anthropic"] = bool(raw)
         elif setting_name == "openai_key":
-            settings["apiKeys"]["openai"] = value.get("value", "") if isinstance(value, dict) else ""
+            raw = value.get("value", "") if isinstance(value, dict) else ""
+            settings["apiKeys"]["openai"] = _mask_key(raw)
+            settings["configured"]["openai"] = bool(raw)
         elif setting_name == "google_key":
-            settings["apiKeys"]["google"] = value.get("value", "") if isinstance(value, dict) else ""
+            raw = value.get("value", "") if isinstance(value, dict) else ""
+            settings["apiKeys"]["google"] = _mask_key(raw)
+            settings["configured"]["google"] = bool(raw)
         elif setting_name == "ollama_url":
-            settings["apiKeys"]["ollamaBaseUrl"] = value.get("value", "") if isinstance(value, dict) else ""
+            raw = value.get("value", "") if isinstance(value, dict) else ""
+            settings["apiKeys"]["ollamaBaseUrl"] = raw  # URL is not sensitive
+            settings["configured"]["ollama"] = bool(raw)
 
     return settings
 
@@ -102,6 +125,22 @@ async def update_settings(update: SettingsUpdate, db=Depends(get_db)):
                     db.add(profile)
 
     await db.commit()
+
+    # Rebuild provider registry with all current keys from DB
+    all_keys: dict = {}
+    result2 = await db.execute(select(UserProfile).filter(UserProfile.key.startswith("settings.")))
+    for row in result2.scalars().all():
+        name = row.key.replace("settings.", "")
+        val = row.value.get("value", "") if isinstance(row.value, dict) else ""
+        all_keys[name] = val
+
+    rebuild_registry(
+        anthropic_key=all_keys.get("anthropic_key", ""),
+        openai_key=all_keys.get("openai_key", ""),
+        google_key=all_keys.get("google_key", ""),
+        ollama_url=all_keys.get("ollama_url", ""),
+    )
+
     return {"status": "ok"}
 
 
