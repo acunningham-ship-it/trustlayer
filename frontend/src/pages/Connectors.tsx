@@ -34,6 +34,16 @@ export default function Connectors() {
 
     fetch('/api/connectors/cli').then(r => r.json()).then(data => {
       setCliTools(data)
+      // Merge available CLI tools into connectors as provider cards
+      const cliAsConnectors = data
+        .filter((t: CliTool) => t.available)
+        .map((t: CliTool) => ({
+          name: t.name,
+          type: 'cli',
+          available: true,
+          models: [t.version ? `cli (${t.version})` : 'cli'],
+        }))
+      setConnectors(prev => [...prev, ...cliAsConnectors])
     }).catch(() => {})
   }, [])
 
@@ -59,10 +69,10 @@ export default function Connectors() {
         <p className="text-stone-500 dark:text-stone-400 mt-1">All your AI providers in one place.</p>
       </div>
 
-      {/* API Connectors */}
+      {/* All Providers */}
       <div className="mb-3 flex items-center gap-2">
         <Zap className="h-4 w-4 text-amber-500" />
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">API Providers</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Providers</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
         {connectors.map(c => (
@@ -70,12 +80,19 @@ export default function Connectors() {
             key={c.name}
             className={`rounded-xl border p-5 transition-all cursor-pointer hover:shadow-lg ${
               c.available
-                ? 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
+                ? c.type === 'cli'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 hover:border-emerald-300 dark:hover:border-emerald-700'
+                  : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
                 : 'bg-stone-50 dark:bg-stone-900/50 border-stone-200 dark:border-stone-800 opacity-60'
             }`}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="font-semibold text-stone-900 dark:text-stone-100 capitalize text-sm">{c.name}</span>
+              <div className="flex items-center gap-2">
+                {c.type === 'cli'
+                  ? <Terminal className="h-4 w-4 text-emerald-500" />
+                  : <Zap className="h-4 w-4 text-amber-500" />}
+                <span className="font-semibold text-stone-900 dark:text-stone-100 text-sm">{c.name}</span>
+              </div>
               {c.available
                 ? <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                 : <XCircle className="h-5 w-5 text-stone-300 dark:text-stone-600 flex-shrink-0" />}
@@ -101,53 +118,6 @@ export default function Connectors() {
             )}
           </div>
         ))}
-      </div>
-
-      {/* CLI Tools */}
-      <div className="mb-3 flex items-center gap-2">
-        <Terminal className="h-4 w-4 text-emerald-500" />
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">CLI Tools</h2>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {cliTools.map(t => {
-          const cliId = t.name.toLowerCase().replace(/ /g, '-')
-          const isSelected = selected?.provider === cliId && selected?.model === 'cli'
-          return (
-          <div
-            key={t.name}
-            onClick={() => t.available && setSelected({ provider: cliId, model: 'cli' })}
-            className={`rounded-xl border p-4 transition-all ${
-              t.available
-                ? isSelected
-                  ? 'bg-emerald-100 dark:bg-emerald-950/50 border-emerald-400 dark:border-emerald-600 shadow-md cursor-pointer'
-                  : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 hover:shadow-lg cursor-pointer'
-                : 'bg-stone-50 dark:bg-stone-900/50 border-stone-200 dark:border-stone-800 opacity-60'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Terminal className={`h-4 w-4 ${t.available ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-400 dark:text-stone-600'}`} />
-                <span className="font-semibold text-stone-900 dark:text-stone-100 text-sm">{t.name}</span>
-              </div>
-              {t.available
-                ? <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                : <XCircle className="h-4 w-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />}
-            </div>
-            {t.available ? (
-              <div className="space-y-1 mt-2">
-                {t.version && (
-                  <p className="text-xs text-stone-500 dark:text-stone-400 font-mono truncate" title={t.version}>{t.version}</p>
-                )}
-                {t.path && (
-                  <p className="text-xs text-stone-400 dark:text-stone-500 font-mono truncate" title={t.path}>{t.path}</p>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">Not installed</p>
-            )}
-          </div>
-          )
-        })}
       </div>
 
       {selected && (
