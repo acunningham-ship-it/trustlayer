@@ -6,9 +6,11 @@ from sqlalchemy import select, or_
 from typing import Optional
 import hashlib
 import re
+import json
 
-from ..database import get_db, KnowledgeItem
+from ..database import get_db, KnowledgeItem, AIInteraction
 from ..config import KNOWLEDGE_DIR
+from ..providers.registry import get_registry
 
 router = APIRouter()
 
@@ -19,6 +21,142 @@ def simple_search(content: str, query: str) -> float:
     content_lower = content.lower()
     matches = sum(content_lower.count(term) for term in query_terms)
     return matches / max(len(query_terms), 1)
+
+
+class AskRequest(BaseModel):
+    question: str
+    doc_filter: Optional[str] = None  # Optional filename filter
+
+
+@router.post("/ask")
+async def ask_knowledge_base(req: AskRequest, db=Depends(get_db)):
+    """Ask a question to the knowledge base using RAG with AI synthesis."""
+    # Search knowledge base for relevant docs
+    result = await db.execute(select(KnowledgeItem))
+    items = result.scalars().all()
+
+    scored = []
+    for item in items:
+        # Apply optional filename filter
+        if req.doc_filter and req.doc_filter.lower() not in item.filename.lower():
+            continue
+
+        score = simple_search(item.content, req.question)
+        if score > 0:
+            scored.append({
+                "id": item.id,
+                "filename": item.filename,
+                "content": item.content,
+                "relevance": score,
+            })
+
+    scored.sort(key=lambda x: x["relevance"], reverse=True)
+    top_docs = scored[:3]
+
+    if not top_docs:
+        return {
+            "question": req.question,
+            "answer": "No relevant documents found in knowledge base.",
+            "sources": [],
+            "confidence": 0.0,
+        }
+
+    # Build context from top results
+    context_parts = []
+    sources = []
+    for doc in top_docs:
+        context_parts.append(f"[{doc['filename']}]\n{doc['content'][:500]}...")
+        sources.append({
+            "id": doc["id"],
+            "filename": doc["filename"],
+            "relevance": round(doc["relevance"], 2),
+        })
+
+    context = "\n\n---\n\n".join(context_parts)
+
+    # Get an available AI provider
+    registry = get_registry()
+    if not registry:
+        return {
+            "question": req.question,
+            "answer": "No AI providers available to synthesize answer.",
+            "sources": sources,
+            "confidence": 0.0,
+        }
+
+    # Try providers in order: ollama, anthropic, openai, google
+    provider_name = None
+    provider = None
+    for pname in ["ollama", "anthropic", "openai", "google"]:
+        if pname in registry:
+            p = registry[pname]
+            try:
+                if await p.is_available():
+                    provider_name = pname
+                    provider = p
+                    break
+            except Exception:
+                continue
+
+    if not provider:
+        return {
+            "question": req.question,
+            "answer": "No available AI provider to synthesize answer.",
+            "sources": sources,
+            "confidence": 0.0,
+        }
+
+    # Build synthesis prompt
+    synthesis_prompt = f"""Based on the following knowledge base documents, answer this question:
+
+Question: {req.question}
+
+Knowledge Base:
+{context}
+
+Provide a concise, factual answer based only on the documents above. Cite specific documents by filename."""
+
+    try:
+        models = await provider.list_models()
+        if not models:
+            return {
+                "question": req.question,
+                "answer": "AI provider has no available models.",
+                "sources": sources,
+                "confidence": 0.0,
+            }
+
+        model = models[0]
+        response = await provider.complete(synthesis_prompt, model)
+
+        # Log interaction
+        interaction = AIInteraction(
+            provider=provider_name,
+            model=model,
+            prompt=synthesis_prompt,
+            response=response.content,
+            tokens_used=response.tokens_in + response.tokens_out,
+            cost_usd=response.cost_usd,
+        )
+        db.add(interaction)
+        await db.commit()
+
+        return {
+            "question": req.question,
+            "answer": response.content,
+            "sources": sources,
+            "confidence": 0.8 if len(top_docs) >= 2 else 0.6,
+            "provider": provider_name,
+            "model": model,
+        }
+
+    except Exception as e:
+        return {
+            "question": req.question,
+            "answer": f"Error generating answer: {str(e)}",
+            "sources": sources,
+            "confidence": 0.0,
+        }
 
 
 @router.post("/upload")

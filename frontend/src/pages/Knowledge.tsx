@@ -1,11 +1,14 @@
 import { useEffect, useState, useRef } from 'react'
-import { BookOpen, Upload, Search, Trash2 } from 'lucide-react'
+import { BookOpen, Upload, Search, Trash2, MessageCircle } from 'lucide-react'
 
 export default function Knowledge() {
   const [items, setItems] = useState<any[]>([])
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
+  const [question, setQuestion] = useState('')
+  const [qaResult, setQaResult] = useState<any>(null)
+  const [isAskingQuestion, setIsAskingQuestion] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const load = () => {
@@ -37,6 +40,21 @@ export default function Knowledge() {
   const remove = async (id: string) => {
     await fetch(`/api/knowledge/${id}`, { method: 'DELETE' })
     load()
+  }
+
+  const askQuestion = async () => {
+    if (!question.trim()) return
+    setIsAskingQuestion(true)
+    try {
+      const r = await fetch('/api/knowledge/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      })
+      setQaResult(await r.json())
+    } finally {
+      setIsAskingQuestion(false)
+    }
   }
 
   return (

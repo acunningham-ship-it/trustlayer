@@ -290,19 +290,52 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={saveSettings}
-          disabled={isSaving}
-          className="px-6 py-2 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-lg text-sm font-medium hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors disabled:opacity-50"
-        >
-          {isSaving ? 'Saving...' : 'Save Settings'}
-        </button>
-        {saveSuccess && (
-          <span className="flex items-center gap-1.5 text-sm text-green-700 dark:text-green-400">
-            <CheckCircle className="h-4 w-4" /> Settings saved
-          </span>
+      {/* Test All and Save Buttons */}
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={testAllProviders}
+            disabled={isTestingAll}
+            className="px-6 py-2 border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 rounded-lg text-sm font-medium hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+          >
+            {isTestingAll && <Loader className="h-4 w-4 animate-spin" />}
+            Test All Providers
+          </button>
+          <button
+            onClick={saveSettings}
+            disabled={isSaving}
+            className="px-6 py-2 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-lg text-sm font-medium hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save Settings'}
+          </button>
+          {saveSuccess && (
+            <span className="flex items-center gap-1.5 text-sm text-green-700 dark:text-green-400">
+              <CheckCircle className="h-4 w-4" /> Settings saved
+            </span>
+          )}
+        </div>
+
+        {testAllResults && (
+          <div className="bg-stone-50 dark:bg-stone-800/50 rounded-lg p-4 space-y-2">
+            <p className="text-xs uppercase tracking-wider font-medium text-stone-600 dark:text-stone-400 mb-3">Test Results</p>
+            <div className="space-y-2">
+              {Object.entries(testAllResults).map(([provider, result]) => (
+                <div key={provider} className="flex items-center justify-between text-sm">
+                  <span className="capitalize text-stone-700 dark:text-stone-300">{provider}</span>
+                  <div className="flex items-center gap-2">
+                    {result.status ? (
+                      <>
+                        <Check className="h-4 w-4 text-green-600" />
+                        {result.latency && <span className="text-xs text-stone-500">{result.latency}ms</span>}
+                      </>
+                    ) : (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

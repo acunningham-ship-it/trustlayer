@@ -45,30 +45,57 @@ def server():
 
 
 @app.command()
-def verify(text: str = typer.Argument(help="Text to verify (or '-' to read from stdin)")):
+def verify(
+    text: Optional[str] = typer.Argument(None, help="Text to verify (or '-' to read from stdin)"),
+    json_output: bool = typer.Option(False, "--json", help="Output results as JSON"),
+):
     """Verify AI-generated content and get a trust score."""
-    if text == "-":
-        import sys
-        text = sys.stdin.read()
+    # Read from stdin if text is None or "-", or if stdin is piped
+    if text is None or text == "-":
+        if not sys.stdin.isatty():
+            text = sys.stdin.read().strip()
+        elif text == "-":
+            console.print("Enter text to verify (Ctrl+D when done):")
+            text = sys.stdin.read().strip()
+        else:
+            console.print("[red]Error: No text provided and stdin is not piped[/red]")
+            raise typer.Exit(1)
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as p:
         p.add_task("Analyzing content...", total=None)
         result = api("/api/verify", "POST", {"content": text})
 
     score = result["trust_score"]
-    color = "green" if score >= 85 else "yellow" if score >= 60 else "red"
-    label = result["trust_label"].upper()
 
-    console.print(Panel(
-        f"[bold {color}]Trust Score: {score}/100 ({label})[/bold {color}]\n\n{result['summary']}",
-        title="[bold]TrustLayer Verification[/bold]",
-        border_style=color,
-    ))
+    if json_output:
+        # Output JSON format for piping to tools like jq
+        json_result = {
+            "score": score,
+            "level": result.get("trust_label", "unknown"),
+            "issues": result.get("issues", []),
+            "verified": score >= 70,
+            "summary": result.get("summary", "")
+        }
+        console.print(json.dumps(json_result))
+    else:
+        # Pretty-print format
+        color = "green" if score >= 85 else "yellow" if score >= 60 else "red"
+        label = result["trust_label"].upper()
 
-    if result["issues"]:
-        console.print("\n[bold yellow]Issues found:[/bold yellow]")
-        for issue in result["issues"]:
-            console.print(f"  • {issue}")
+        console.print(Panel(
+            f"[bold {color}]Trust Score: {score}/100 ({label})[/bold {color}]\n\n{result['summary']}",
+            title="[bold]TrustLayer Verification[/bold]",
+            border_style=color,
+        ))
+
+        if result["issues"]:
+            console.print("\n[bold yellow]Issues found:[/bold yellow]")
+            for issue in result["issues"]:
+                console.print(f"  • {issue}")
+
+    # Exit code: 0 if trust >= 70, 1 if < 70 (for scripting)
+    exit_code = 0 if score >= 70 else 1
+    raise typer.Exit(exit_code)
 
 
 @app.command()
@@ -367,6 +394,51 @@ def knowledge_search(
             console.print(f"\n[dim]Results: {len(result['results'])} item(s) found[/dim]")
         else:
             console.print("[yellow]No matching knowledge items found.[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@knowledge_app.command("ask")
+def knowledge_ask(
+    question: Optional[str] = typer.Argument(None, help="Question to ask"),
+):
+    """Ask a question about the knowledge base."""
+    # Read from stdin if question is None or "-", or if stdin is piped
+    if question is None or question == "-":
+        if not sys.stdin.isatty():
+            question = sys.stdin.read().strip()
+        elif question == "-":
+            console.print("Enter your question (Ctrl+D when done):")
+            question = sys.stdin.read().strip()
+        else:
+            console.print("[red]Error: No question provided and stdin is not piped[/red]")
+            raise typer.Exit(1)
+
+    try:
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as p:
+            p.add_task("Searching knowledge base...", total=None)
+            result = api("/api/knowledge/ask", "POST", {"question": question})
+
+        if "error" in result:
+            console.print(f"[red]Error: {result['error']}[/red]")
+            raise typer.Exit(1)
+
+        console.print(Panel(
+            result.get("answer", "No answer found"),
+            title="[bold]Knowledge Base Answer[/bold]",
+            border_style="blue",
+        ))
+
+        # Show sources if available
+        sources = result.get("sources", [])
+        if sources:
+            console.print("\n[bold cyan]Sources:[/bold cyan]")
+            for source in sources:
+                console.print(f"  • {source}")
+        else:
+            console.print("\n[dim]No sources referenced[/dim]")
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         raise typer.Exit(1)
