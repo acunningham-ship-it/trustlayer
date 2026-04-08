@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
-trustlayer = "trustlayer_cli.main:app"
+trustlayer = "cli.trustlayer_cli.main:app"
 
 [project.optional-dependencies]
 dev = [
@@ -33,4 +33,4 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["backend*", "cli*"]
+include = ["backend*", "cli*", "cli.trustlayer_cli*"]
