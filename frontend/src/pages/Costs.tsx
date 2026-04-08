@@ -4,11 +4,13 @@ export default function Costs() {
   const [summary, setSummary] = useState<any>(null)
   const [history, setHistory] = useState<any[]>([])
   const [tips, setTips] = useState<string[]>([])
+  const [savings, setSavings] = useState<any>(null)
 
   useEffect(() => {
     fetch('/api/costs/summary').then(r => r.json()).then(setSummary).catch(() => {})
     fetch('/api/costs/history').then(r => r.json()).then(setHistory).catch(() => {})
     fetch('/api/costs/optimize').then(r => r.json()).then(d => setTips(d.tips || [])).catch(() => {})
+    fetch('/api/costs/savings').then(r => r.json()).then(setSavings).catch(() => {})
   }, [])
 
   return (
@@ -51,6 +53,41 @@ export default function Costs() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {savings && savings.savings_usd > 0 && (
+        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl p-6 mb-6">
+          <h2 className="font-semibold text-green-900 dark:text-green-100 mb-4">Savings with Ollama</h2>
+          <div className="mb-5">
+            <p className="text-3xl font-bold text-green-700 dark:text-green-400">${savings.savings_usd.toFixed(2)}</p>
+            <p className="text-sm text-green-700 dark:text-green-400 mt-1">saved this month vs cloud APIs</p>
+          </div>
+          {savings.breakdown && (
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-wider font-medium text-green-700 dark:text-green-400 mb-3">Equivalent cost comparison</p>
+              <div className="space-y-2">
+                {savings.breakdown.claude_haiku && (
+                  <div className="flex items-center justify-between text-sm p-2 bg-white/50 dark:bg-green-900/20 rounded">
+                    <span className="text-green-700 dark:text-green-300">Claude Haiku equivalent</span>
+                    <span className="font-semibold text-green-900 dark:text-green-100">${savings.breakdown.claude_haiku.toFixed(2)}</span>
+                  </div>
+                )}
+                {savings.breakdown.gpt_4o_mini && (
+                  <div className="flex items-center justify-between text-sm p-2 bg-white/50 dark:bg-green-900/20 rounded">
+                    <span className="text-green-700 dark:text-green-300">GPT-4o-mini equivalent</span>
+                    <span className="font-semibold text-green-900 dark:text-green-100">${savings.breakdown.gpt_4o_mini.toFixed(2)}</span>
+                  </div>
+                )}
+                {savings.breakdown.gemini_flash && (
+                  <div className="flex items-center justify-between text-sm p-2 bg-white/50 dark:bg-green-900/20 rounded">
+                    <span className="text-green-700 dark:text-green-300">Gemini Flash equivalent</span>
+                    <span className="font-semibold text-green-900 dark:text-green-100">${savings.breakdown.gemini_flash.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

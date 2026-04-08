@@ -1,6 +1,7 @@
 """Settings router — runtime configuration management."""
 
 import httpx
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -206,3 +207,69 @@ async def test_provider(provider: str, test: ProviderTest):
 
     except Exception:
         return {"status": False}
+
+
+@router.post("/test-all")
+async def test_all_providers(db=Depends(get_db)):
+    """Test all configured providers in parallel."""
+    from datetime import datetime, timezone
+
+    # Get all configured settings from database
+    result = await db.execute(select(UserProfile).filter(UserProfile.key.startswith("settings.")))
+    settings_rows = result.scalars().all()
+
+    settings_dict = {}
+    for row in settings_rows:
+        setting_name = row.key.replace("settings.", "")
+        value = row.value.get("value", "") if isinstance(row.value, dict) else ""
+        settings_dict[setting_name] = value
+
+    # Helper to test a provider safely
+    async def test_with_error_handling(provider_name: str, test_input: ProviderTest):
+        try:
+            result = await test_provider(provider_name, test_input)
+            return (provider_name, result)
+        except Exception as e:
+            return (provider_name, {"status": False, "error": str(e)})
+
+    # Create test tasks for each provider
+    tasks = [
+        test_with_error_handling("anthropic", ProviderTest(apiKey=settings_dict.get("anthropic_key", ""))),
+        test_with_error_handling("openai", ProviderTest(apiKey=settings_dict.get("openai_key", ""))),
+        test_with_error_handling("google", ProviderTest(apiKey=settings_dict.get("google_key", ""))),
+        test_with_error_handling("ollama", ProviderTest(baseUrl=settings_dict.get("ollama_url", "http://localhost:11434"))),
+    ]
+
+    # Run all tests in parallel
+    try:
+        test_results = await asyncio.gather(*tasks)
+
+        # Build results dict
+        results = {}
+        for provider_name, test_result in test_results:
+            results[provider_name] = {
+                "configured": bool(
+                    settings_dict.get(f"{provider_name}_key")
+                    if provider_name != "ollama"
+                    else settings_dict.get("ollama_url")
+                ),
+                "status": test_result.get("status", False),
+                **test_result,
+            }
+
+        # Count passing tests
+        passing = sum(1 for r in results.values() if r.get("status", False))
+
+        return {
+            "tested_at": datetime.now(timezone.utc).isoformat(),
+            "total_providers": len(results),
+            "passing": passing,
+            "failing": len(results) - passing,
+            "results": results,
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "tested_at": datetime.now(timezone.utc).isoformat(),
+        }

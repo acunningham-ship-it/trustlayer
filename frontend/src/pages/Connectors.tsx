@@ -84,6 +84,29 @@ export default function Connectors() {
         <p className="text-stone-500 dark:text-stone-400 mt-1">All your AI providers in one place.</p>
       </div>
 
+      {geminiNeedsKey && (
+        <div className="mb-6 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-xl p-5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-2">GEMINI_API_KEY not set</h3>
+              <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-3">Gemini CLI is installed but needs your API key to function.</p>
+              <div className="space-y-2 mb-3">
+                <p className="text-sm font-mono bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded text-yellow-900 dark:text-yellow-100">export GEMINI_API_KEY=your-key-here</p>
+              </div>
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-yellow-700 dark:text-yellow-300 hover:underline font-medium"
+              >
+                Get your API key from Google AI Studio →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* All Providers */}
       <div className="mb-3 flex items-center gap-2">
         <Zap className="h-4 w-4 text-amber-500" />
