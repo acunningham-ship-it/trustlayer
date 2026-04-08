@@ -2,6 +2,7 @@
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TrustLayer — You bring the AI. We bring the trust.</title>
   <meta name="description" content="The universal AI trust layer. Verify every output, track costs across all providers, compare models on your actual tasks — runs entirely on your machine." />
@@ -35,6 +36,54 @@
     }
     html { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--stone-50); color: var(--stone-900); line-height: 1.5; -webkit-font-smoothing: antialiased; }
     html.dark { background: var(--stone-950); color: var(--stone-100); }
+
+
+    /* --- HERO BACKGROUND --- */
+    .hero-bg {
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(168,162,158,0.08) 0%, transparent 60%),
+        radial-gradient(circle 1px at center, var(--stone-300) 0.5px, transparent 0.5px);
+      background-size: 100% 100%, 24px 24px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 80%);
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .dark .hero-bg::before {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(120,113,108,0.1) 0%, transparent 60%),
+        radial-gradient(circle 1px at center, var(--stone-700) 0.5px, transparent 0.5px);
+      background-size: 100% 100%, 24px 24px;
+    }
+    .hero-bg > * { position: relative; z-index: 1; }
+
+    /* --- SCREENSHOT STYLES --- */
+    .screenshot-wrapper {
+      margin-top: 2.5rem;
+      text-align: center;
+    }
+    .screenshot-img {
+      max-width: 100%;
+      border-radius: 0.875rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      border: 1px solid var(--stone-200);
+    }
+    .dark .screenshot-img {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.2);
+      border-color: var(--stone-800);
+    }
+    .screenshot-caption {
+      font-size: 0.75rem;
+      color: var(--stone-400);
+      margin-top: 0.75rem;
+    }
 
     /* ——— NAV ——— */
     nav {
@@ -336,7 +385,7 @@
   </nav>
 
   <!-- HERO -->
-  <section class="hero">
+  <section class="hero hero-bg">
     <div class="hero-badge">
       <span class="badge-dot"></span>
       Open Source · Local-first · Privacy by default
@@ -417,6 +466,10 @@
           </div>
         </div>
       </div>
+      <div class="screenshot-wrapper">
+        <img src="screenshots/dashboard.png" alt="TrustLayer Dashboard showing trust scores and verification results" class="screenshot-img" loading="lazy" />
+        <p class="screenshot-caption">The TrustLayer dashboard — trust scores at a glance</p>
+      </div>
     </div>
   </section>
 
@@ -434,6 +487,9 @@
           <h3>Universal Connector</h3>
           <p>Plug in any AI: Ollama (auto-detected), Claude, GPT-4, Gemini, Aider. One unified interface for all of them. Switch between providers seamlessly.</p>
           <span class="feature-tag">Ollama · Anthropic · OpenAI · Google</span>
+          <div style="margin-top: 1rem;">
+            <img src="screenshots/connectors.png" alt="TrustLayer provider connectors" class="screenshot-img" style="border-radius: 0.625rem;" loading="lazy" />
+          </div>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🛡️</div>
@@ -477,6 +533,10 @@
           <p>Honest and humble for factual queries. Creative and opinionated for brainstorming. Invisible for routine tasks. Adapts automatically to context.</p>
           <span class="feature-tag">Context-aware · Auto-adapts</span>
         </div>
+      </div>
+      <div class="screenshot-wrapper" style="margin-top: 3rem;">
+        <img src="screenshots/workflows.png" alt="TrustLayer visual workflow builder" class="screenshot-img" style="max-width: 900px;" loading="lazy" />
+        <p class="screenshot-caption">No-code workflow builder with pre-built templates</p>
       </div>
     </div>
   </section>
