@@ -15,7 +15,7 @@ The universal trust layer for every AI tool you use. Verify outputs, track costs
 ## 🚀 One Command to Get Started
 
 ```bash
-pip install trustlayer && trustlayer server
+pip install trustlayer-ai && trustlayer server
 ```
 
 That's it. Runs locally. Auto-detects Ollama. No account needed. [See full Quick Start below ↓](#quick-start)
@@ -60,7 +60,7 @@ People don't trust AI. Not because it's incapable — but because:
 
 ```bash
 # Install
-pip install trustlayer
+pip install trustlayer-ai
 
 # Start the server + web UI
 trustlayer server
@@ -183,7 +183,10 @@ All data stored in `~/.trustlayer/` — nothing leaves your machine unless you c
 git clone https://github.com/acunningham-ship-it/trustlayer
 cd trustlayer
 
-# Backend (FastAPI)
+# Install (from PyPI)
+pip install trustlayer-ai
+
+# Or install from source
 pip install -r requirements.txt
 uvicorn backend.main:app --reload
 # → http://localhost:8000
