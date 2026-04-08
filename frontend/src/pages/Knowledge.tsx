@@ -120,7 +120,7 @@ export default function Knowledge() {
         </div>
       )}
 
-      <div>
+      <div className="mb-8">
         <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4 flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-stone-500" />
           Documents ({items.length})
@@ -151,6 +151,61 @@ export default function Knowledge() {
           </div>
         )}
       </div>
+
+      {items.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4 flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-stone-500" />
+            Ask a Question
+          </h2>
+          <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6 space-y-4">
+            <div>
+              <label className="text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400 font-medium block mb-3">
+                Your question
+              </label>
+              <textarea
+                value={question}
+                onChange={e => setQuestion(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && e.ctrlKey && askQuestion()}
+                placeholder="Ask anything about your knowledge base..."
+                className="w-full h-32 text-sm bg-transparent outline-none resize-none text-stone-800 dark:text-stone-200 placeholder-stone-400 dark:placeholder-stone-500 border border-stone-200 dark:border-stone-700 rounded-lg p-3"
+              />
+            </div>
+            <div className="flex justify-end pt-4 border-t border-stone-100 dark:border-stone-800">
+              <button
+                onClick={askQuestion}
+                disabled={isAskingQuestion || !question.trim()}
+                className="px-4 py-2 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-40 transition-all"
+              >
+                {isAskingQuestion ? 'Thinking...' : 'Ask'}
+              </button>
+            </div>
+
+            {qaResult && !qaResult.error && (
+              <div className="mt-6 pt-6 border-t border-stone-100 dark:border-stone-800 space-y-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400 font-medium mb-2">Answer</p>
+                  <div className="bg-stone-50 dark:bg-stone-800/50 rounded-lg p-4">
+                    <p className="text-sm text-stone-700 dark:text-stone-300 whitespace-pre-wrap">{qaResult.answer}</p>
+                  </div>
+                </div>
+                {qaResult.sources && qaResult.sources.length > 0 && (
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400 font-medium mb-2">Sources</p>
+                    <div className="space-y-2">
+                      {qaResult.sources.map((source: string, i: number) => (
+                        <div key={i} className="text-xs bg-stone-50 dark:bg-stone-800/50 rounded-lg p-2 text-stone-600 dark:text-stone-400">
+                          📄 {source}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

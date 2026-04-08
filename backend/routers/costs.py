@@ -11,6 +11,17 @@ from ..config import DEFAULT_MONTHLY_BUDGET
 
 router = APIRouter()
 
+# Pricing per 1M tokens (input/output)
+PROVIDER_PRICING = {
+    "claude-opus-4-6": {"input": 15.0, "output": 75.0},
+    "claude-sonnet-4-6": {"input": 3.0, "output": 15.0},
+    "claude-haiku-4-5": {"input": 0.80, "output": 4.0},
+    "gpt-4o": {"input": 5.0, "output": 15.0},
+    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+    "gemini-2.0-flash": {"input": 0.075, "output": 0.30},
+    "gemini-pro": {"input": 0.50, "output": 1.50},
+}
+
 
 @router.get("")
 async def costs_root(db=Depends(get_db)):
@@ -73,6 +84,28 @@ async def cost_summary(db=Depends(get_db)):
     budget = DEFAULT_MONTHLY_BUDGET
     pct = (monthly_total / budget * 100) if budget > 0 else 0
 
+    # Get provider comparison (Ollama vs cloud alternatives)
+    provider_comparison = None
+    ollama_total = next((p["cost_usd"] for p in by_provider if p["provider"] == "ollama"), 0.0)
+    if ollama_total == 0 and any(p["provider"] == "ollama" for p in by_provider):
+        # Ollama was used but is free
+        result = await db.execute(
+            select(func.count().label("count"))
+            .select_from(AIInteraction)
+            .where(AIInteraction.provider == "ollama")
+            .where(AIInteraction.created_at >= month_start)
+        )
+        ollama_calls = result.scalar() or 0
+        if ollama_calls > 0:
+            # Estimate savings
+            avg_cost_per_call = 0.01  # Rough estimate
+            estimated_cloud_cost = ollama_calls * avg_cost_per_call
+            provider_comparison = {
+                "ollama_calls": ollama_calls,
+                "estimated_cloud_cost": round(estimated_cloud_cost, 2),
+                "estimated_savings": round(estimated_cloud_cost, 2),
+            }
+
     return {
         "month": now.strftime("%B %Y"),
         "total_usd": round(monthly_total, 4),
@@ -81,6 +114,7 @@ async def cost_summary(db=Depends(get_db)):
         "alert": pct >= 80,
         "alert_message": f"You've spent ${monthly_total:.2f} this month ({pct:.0f}% of your ${budget:.0f} budget)" if pct >= 80 else None,
         "by_provider": by_provider,
+        "provider_comparison": provider_comparison,
     }
 
 
@@ -99,6 +133,66 @@ async def cost_history(days: int = 30, db=Depends(get_db)):
         .order_by(func.date(CostEntry.recorded_at))
     )
     return [{"date": str(r[0]), "cost_usd": round(r[1], 4), "calls": r[2]} for r in result]
+
+
+@router.get("/savings")
+async def cost_savings(db=Depends(get_db)):
+    """Calculate Ollama cost savings vs cloud providers."""
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # Get all Ollama interactions this month
+    result = await db.execute(
+        select(
+            func.sum(AIInteraction.tokens_used).label("total_tokens"),
+            func.count().label("call_count"),
+        )
+        .where(AIInteraction.provider == "ollama")
+        .where(AIInteraction.created_at >= month_start)
+    )
+    row = result.scalar_one_or_none()
+
+    if not row or not row[0]:
+        return {
+            "month": now.strftime("%B %Y"),
+            "ollama_interactions": 0,
+            "ollama_cost_usd": 0.0,
+            "estimated_cloud_costs": {},
+            "total_saved_usd": 0.0,
+        }
+
+    total_tokens = row[0] or 0
+    call_count = row[1] or 0
+
+    # Estimate cost if these calls were made on cloud providers
+    # Simple approximation: average tokens per call
+    avg_tokens_per_call = total_tokens / call_count if call_count > 0 else total_tokens
+
+    cloud_costs = {}
+    for provider_model, pricing in PROVIDER_PRICING.items():
+        # Estimate cost: assume 30% input, 70% output
+        input_tokens = int(avg_tokens_per_call * 0.3)
+        output_tokens = int(avg_tokens_per_call * 0.7)
+
+        input_cost = (input_tokens / 1_000_000) * pricing["input"] * call_count
+        output_cost = (output_tokens / 1_000_000) * pricing["output"] * call_count
+
+        cloud_costs[provider_model] = round(input_cost + output_cost, 2)
+
+    total_saved = sum(cloud_costs.values())
+
+    return {
+        "month": now.strftime("%B %Y"),
+        "ollama_interactions": call_count,
+        "ollama_cost_usd": 0.0,
+        "total_tokens_saved": total_tokens,
+        "estimated_cloud_costs": cloud_costs,
+        "total_saved_usd": round(total_saved, 2),
+        "breakdown_by_provider": {
+            "cheapest": min(cloud_costs.items(), key=lambda x: x[1])[0] if cloud_costs else None,
+            "most_expensive": max(cloud_costs.items(), key=lambda x: x[1])[0] if cloud_costs else None,
+        },
+    }
 
 
 @router.get("/optimize")

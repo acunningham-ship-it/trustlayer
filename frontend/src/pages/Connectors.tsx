@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle, XCircle, Terminal, Zap } from 'lucide-react'
+import { CheckCircle, XCircle, Terminal, Zap, AlertTriangle } from 'lucide-react'
 
 interface Connector {
   name: string
   type: string
   available: boolean
   models: string[]
+  key_configured?: boolean
 }
 
 interface CliTool {
@@ -14,6 +15,7 @@ interface CliTool {
   available: boolean
   version: string | null
   path: string | null
+  key_configured?: boolean
 }
 
 export default function Connectors() {
@@ -24,6 +26,7 @@ export default function Connectors() {
   const [selected, setSelected] = useState<{ provider: string; model: string } | null>(null)
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [geminiNeedsKey, setGeminiNeedsKey] = useState(false)
 
   // Known models for CLI tools
   const CLI_MODELS: Record<string, string[]> = {
@@ -37,6 +40,11 @@ export default function Connectors() {
       fetch('/api/connectors/cli').then(r => r.json()).catch(() => []),
     ]).then(([apiData, cliData]) => {
       setCliTools(cliData)
+      // Check if Gemini CLI is available but key not configured
+      const geminiCli = cliData.find((t: CliTool) => t.name === 'Gemini CLI' && t.available)
+      if (geminiCli && !geminiCli.key_configured) {
+        setGeminiNeedsKey(true)
+      }
       // Merge CLI tools into a single providers list
       const cliAsConnectors = cliData
         .filter((t: CliTool) => t.available)
@@ -45,6 +53,7 @@ export default function Connectors() {
           type: 'cli',
           available: true,
           models: CLI_MODELS[t.name] || ['cli'],
+          key_configured: t.key_configured
         }))
       const all = [...apiData, ...cliAsConnectors]
       setConnectors(all)
