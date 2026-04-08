@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import select, func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from ..database import get_db, CostEntry, AIInteraction
@@ -15,7 +15,7 @@ router = APIRouter()
 @router.get("/summary")
 async def cost_summary(db=Depends(get_db)):
     """Get cost summary for current month."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # Monthly total
@@ -51,7 +51,7 @@ async def cost_summary(db=Depends(get_db)):
 @router.get("/history")
 async def cost_history(days: int = 30, db=Depends(get_db)):
     """Get daily cost breakdown for the past N days."""
-    since = datetime.utcnow() - timedelta(days=days)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
     result = await db.execute(
         select(
             func.date(CostEntry.recorded_at).label("date"),

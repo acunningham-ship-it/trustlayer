@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import select, delete
 from typing import Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..database import get_db, UserProfile
 
@@ -34,7 +34,7 @@ async def update_profile(update: ProfileUpdate, db=Depends(get_db)):
 
     if existing:
         existing.value = update.value
-        existing.updated_at = datetime.utcnow()
+        existing.updated_at = datetime.now(timezone.utc)
     else:
         db.add(UserProfile(key=update.key, value=update.value))
 
