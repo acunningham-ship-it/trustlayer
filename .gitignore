@@ -14,3 +14,5 @@ frontend/dist/
 .DS_Store
 *.log
 ~/.trustlayer/
+advertise/.ad-credentials
+advertise/reddit_cookies.json
