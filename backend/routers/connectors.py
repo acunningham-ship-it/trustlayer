@@ -1,9 +1,10 @@
 """Universal AI Connector — manage and query AI providers."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
 from ..providers.registry import get_registry
+from ..database import get_db, CostEntry
 
 router = APIRouter()
 
@@ -32,7 +33,7 @@ async def list_connectors():
 
 
 @router.post("/complete")
-async def complete(req: CompleteRequest):
+async def complete(req: CompleteRequest, db=Depends(get_db)):
     """Run a completion on any connected provider."""
     registry = get_registry()
     provider = registry.get(req.provider)
@@ -40,6 +41,18 @@ async def complete(req: CompleteRequest):
         return {"error": f"Provider '{req.provider}' not found"}
 
     response = await provider.complete(req.prompt, req.model, max_tokens=req.max_tokens)
+
+    # Record cost to database
+    cost_entry = CostEntry(
+        provider=response.provider,
+        model=response.model,
+        tokens_in=response.tokens_in,
+        tokens_out=response.tokens_out,
+        cost_usd=response.cost_usd,
+    )
+    db.add(cost_entry)
+    await db.commit()
+
     return {
         "provider": response.provider,
         "model": response.model,

@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
+import TrustBadge from './components/TrustBadge'
 import Dashboard from './pages/Dashboard'
 import Verify from './pages/Verify'
 import Connectors from './pages/Connectors'
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/workflows" element={<Workflows />} />
         </Routes>
       </main>
+      <TrustBadge />
     </div>
   )
 }
