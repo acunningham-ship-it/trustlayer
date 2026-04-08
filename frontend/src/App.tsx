@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard'
 import Verify from './pages/Verify'
 import Connectors from './pages/Connectors'
 import Compare from './pages/Compare'
+import SmartRouter from './pages/SmartRouter'
+import Consistency from './pages/Consistency'
 import Costs from './pages/Costs'
 import Knowledge from './pages/Knowledge'
 import History from './pages/History'
@@ -48,6 +50,8 @@ export default function App() {
           <Route path="/verify" element={<Verify />} />
           <Route path="/connectors" element={<Connectors />} />
           <Route path="/compare" element={<Compare />} />
+          <Route path="/smart-router" element={<SmartRouter />} />
+          <Route path="/consistency" element={<Consistency />} />
           <Route path="/costs" element={<Costs />} />
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/history" element={<History />} />

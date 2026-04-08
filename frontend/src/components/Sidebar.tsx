@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   Shield, Zap, GitCompare, DollarSign, BookOpen,
-  Clock, LayoutDashboard, Moon, Sun, Settings as SettingsIcon, Brain
+  Clock, LayoutDashboard, Moon, Sun, Settings as SettingsIcon, Brain, Route, RefreshCw
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -10,6 +10,8 @@ const nav = [
   { to: '/verify', label: 'Verify', icon: Shield },
   { to: '/connectors', label: 'Connectors', icon: Zap },
   { to: '/compare', label: 'Compare', icon: GitCompare },
+  { to: '/smart-router', label: 'Smart Router', icon: Route },
+  { to: '/consistency', label: 'Consistency', icon: RefreshCw },
   { to: '/costs', label: 'Costs', icon: DollarSign },
   { to: '/knowledge', label: 'Knowledge', icon: BookOpen },
   { to: '/history', label: 'History', icon: Clock },
