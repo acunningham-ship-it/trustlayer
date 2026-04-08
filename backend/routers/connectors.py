@@ -2,11 +2,13 @@
 
 import asyncio
 import shutil
+import os
+import json
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
 from ..providers.registry import get_registry
-from ..database import get_db, CostEntry
+from ..database import get_db, CostEntry, AIInteraction
 
 router = APIRouter()
 
@@ -28,6 +30,14 @@ async def _detect_cli_tool(name: str, binary: str, version_cmd: list[str]) -> di
         "version": None,
         "path": path,
     }
+
+    # Special handling for Gemini CLI: check if API key is configured
+    if binary == "gemini" and path:
+        gemini_key_configured = bool(os.environ.get("GEMINI_API_KEY"))
+        info["key_configured"] = gemini_key_configured
+        if not gemini_key_configured:
+            info["setup_instructions"] = "Set GEMINI_API_KEY environment variable to use Gemini CLI"
+
     if path:
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -110,6 +120,19 @@ async def complete(req: CompleteRequest, db=Depends(get_db)):
             latency = int((_time.time() - start) * 1000)
             tokens_out = len(content.split())
             tokens_in = len(req.prompt.split())
+
+            # Log interaction for CLI tools
+            interaction = AIInteraction(
+                provider=req.provider.lower().replace(" ", "_"),
+                model=req.model,
+                prompt=req.prompt,
+                response=content or "No response from CLI",
+                tokens_used=tokens_in + tokens_out,
+                cost_usd=0.0,
+            )
+            db.add(interaction)
+            await db.commit()
+
             return {
                 "provider": req.provider,
                 "model": req.model,
@@ -131,6 +154,7 @@ async def complete(req: CompleteRequest, db=Depends(get_db)):
 
     response = await provider.complete(req.prompt, req.model, max_tokens=req.max_tokens)
 
+    # Log both CostEntry and AIInteraction
     cost_entry = CostEntry(
         provider=response.provider,
         model=response.model,
@@ -139,6 +163,16 @@ async def complete(req: CompleteRequest, db=Depends(get_db)):
         cost_usd=response.cost_usd,
     )
     db.add(cost_entry)
+
+    interaction = AIInteraction(
+        provider=response.provider,
+        model=response.model,
+        prompt=req.prompt,
+        response=response.content,
+        tokens_used=response.tokens_in + response.tokens_out,
+        cost_usd=response.cost_usd,
+    )
+    db.add(interaction)
     await db.commit()
 
     return {
