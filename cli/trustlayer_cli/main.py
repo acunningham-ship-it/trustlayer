@@ -449,5 +449,43 @@ def proxy():
         border_style="green",
     ))
 
+
+@app.command()
+def digest():
+    """Show weekly savings and usage digest."""
+    result = api("/api/digest/weekly")
+
+    savings = result.get("savings_usd", 0)
+    requests = result.get("requests_count", 0)
+    tokens = result.get("tokens_total", 0)
+    cost = result.get("total_cost_usd", 0)
+    routing = result.get("routing_decisions", 0)
+    ollama_sav = result.get("ollama_savings_usd", 0)
+    routing_sav = result.get("routing_savings_usd", 0)
+
+    color = "green" if savings > 0 else "yellow"
+    console.print(Panel(
+        f"[bold {color}]${savings:.2f} saved[/bold {color}] this week\n\n"
+        f"Requests:  {requests}\n"
+        f"Tokens:    {tokens:,}\n"
+        f"Cost:      ${cost:.4f}\n"
+        f"Routing:   {routing} smart decisions\n\n"
+        f"[dim]Ollama savings:  ${ollama_sav:.2f}[/dim]\n"
+        f"[dim]Routing savings: ${routing_sav:.2f}[/dim]",
+        title="[bold]Weekly Digest[/bold]",
+        border_style=color,
+    ))
+
+    top = result.get("top_models", [])
+    if top:
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Model")
+        table.add_column("Requests", justify="right")
+        table.add_column("Cost", justify="right")
+        for m in top:
+            table.add_row(m["model"], str(m["requests"]), f"${m['cost_usd']:.4f}")
+        console.print(table)
+
+
 if __name__ == "__main__":
     app()

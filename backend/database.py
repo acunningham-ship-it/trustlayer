@@ -94,6 +94,8 @@ class ProxyLog(Base):
     status_code = Column(Integer, default=200)
     error = Column(String, nullable=True)
     streamed = Column(Boolean, default=False)
+    routed_from = Column(String, nullable=True)
+    savings_usd = Column(Float, default=0.0)
 
 
 engine = create_async_engine(DATABASE_URL, echo=False)

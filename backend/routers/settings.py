@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from ..database import get_db, UserProfile
+from ..database import get_db, UserProfile, ProxyLog
+from ..routing.rules import RoutingRule, DEFAULT_RULES, load_rules, save_rules
 from ..providers.registry import rebuild_registry
 
 router = APIRouter()
@@ -277,3 +278,62 @@ async def test_all_providers(db=Depends(get_db)):
             "error": str(e),
             "tested_at": datetime.now(timezone.utc).isoformat(),
         }
+
+
+
+# ---------------------------------------------------------------------------
+# Routing settings
+# ---------------------------------------------------------------------------
+
+class RoutingRulesUpdate(BaseModel):
+    rules: list[RoutingRule]
+
+
+@router.get("/routing")
+async def get_routing_rules():
+    """Return current routing rules."""
+    rules = await load_rules()
+    return {
+        "rules": [r.model_dump() for r in rules],
+        "count": len(rules),
+    }
+
+
+@router.put("/routing")
+async def update_routing_rules(update: RoutingRulesUpdate):
+    """Update routing rules."""
+    await save_rules(update.rules)
+    return {"status": "ok", "count": len(update.rules)}
+
+
+@router.post("/routing/reset")
+async def reset_routing_rules():
+    """Reset routing rules to defaults."""
+    await save_rules(DEFAULT_RULES)
+    return {"status": "ok", "count": len(DEFAULT_RULES)}
+
+
+@router.get("/routing/stats")
+async def get_routing_stats(db=Depends(get_db)):
+    """Return routing statistics — total routed requests and savings."""
+    from sqlalchemy import func
+
+    # Total routed requests
+    result = await db.execute(
+        select(
+            func.count(ProxyLog.id).label("total_routed"),
+            func.coalesce(func.sum(ProxyLog.savings_usd), 0.0).label("total_savings"),
+        ).filter(ProxyLog.routed_from.isnot(None))
+    )
+    row = result.one()
+
+    # Total requests overall
+    total_result = await db.execute(select(func.count(ProxyLog.id)))
+    total_requests = total_result.scalar() or 0
+
+    return {
+        "total_requests": total_requests,
+        "total_routed": row.total_routed,
+        "total_savings_usd": round(float(row.total_savings), 6),
+        "routing_rate_pct": round(row.total_routed / total_requests * 100, 1) if total_requests > 0 else 0.0,
+    }

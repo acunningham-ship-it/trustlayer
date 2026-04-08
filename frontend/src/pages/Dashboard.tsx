@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Shield, Zap, DollarSign, BookOpen } from 'lucide-react'
+import { Shield, Zap, DollarSign, TrendingDown } from 'lucide-react'
 
 interface ConnectorInfo {
   name: string
@@ -22,15 +22,25 @@ interface CostSummary {
   alert: boolean
 }
 
+interface WeeklyDigest {
+  savings_usd: number
+  requests_count: number
+  tokens_total: number
+  top_models: { model: string; requests: number; cost_usd: number }[]
+  routing_decisions: number
+}
+
 export default function Dashboard() {
   const [connectors, setConnectors] = useState<ConnectorInfo[]>([])
   const [insights, setInsights] = useState<Insights | null>(null)
   const [costs, setCosts] = useState<CostSummary | null>(null)
+  const [digest, setDigest] = useState<WeeklyDigest | null>(null)
 
   useEffect(() => {
     fetch('/api/connectors/').then(r => r.json()).then(setConnectors).catch(() => {})
     fetch('/api/learn/insights').then(r => r.json()).then(setInsights).catch(() => {})
     fetch('/api/costs/summary').then(r => r.json()).then(setCosts).catch(() => {})
+    fetch('/api/digest/weekly').then(r => r.json()).then(setDigest).catch(() => {})
   }, [])
 
   const availableCount = connectors.filter(c => c.available).length
@@ -64,10 +74,12 @@ export default function Dashboard() {
           alert={costs?.alert}
         />
         <StatCard
-          icon={<BookOpen className="h-5 w-5" />}
-          label="Knowledge Base"
-          value="Local"
-          note="All data stored on your machine"
+          icon={<TrendingDown className="h-5 w-5" />}
+          label="Savings This Week"
+          value={digest ? `$${digest.savings_usd.toFixed(2)}` : '—'}
+          note={digest ? `${digest.requests_count} requests this week` : 'Loading...'}
+          highlight={digest !== null && digest.savings_usd > 0}
+          savings
         />
       </div>
 
@@ -106,13 +118,14 @@ export default function Dashboard() {
   )
 }
 
-function StatCard({ icon, label, value, note, alert, highlight }: {
+function StatCard({ icon, label, value, note, alert, highlight, savings }: {
   icon: React.ReactNode
   label: string
   value: string
   note: string
   alert?: boolean
   highlight?: boolean
+  savings?: boolean
 }) {
   return (
     <div className={`rounded-xl border p-5 transition-all hover:shadow-lg ${
@@ -128,7 +141,7 @@ function StatCard({ icon, label, value, note, alert, highlight }: {
         {icon}
         <span className="text-xs uppercase tracking-wider font-medium">{label}</span>
       </div>
-      <div className="text-2xl font-bold text-stone-900 dark:text-stone-100">{value}</div>
+      <div className={`text-2xl font-bold ${savings && highlight ? 'text-green-600 dark:text-green-400' : 'text-stone-900 dark:text-stone-100'}`}>{value}</div>
       {note && <div className={`text-xs mt-1 ${
         alert ? 'text-amber-600 dark:text-amber-400/75' : highlight ? 'text-green-600 dark:text-green-400/75' : 'text-stone-400 dark:text-stone-500'
       }`}>{note}</div>}

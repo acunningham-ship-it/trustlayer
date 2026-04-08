@@ -19,6 +19,8 @@ from ..config import OLLAMA_BASE_URL
 from ..database import AsyncSessionLocal, ProxyLog
 from ..providers.openai_compat import PRICING, PROVIDER_ENDPOINTS
 from ..providers.registry import get_registry
+from ..routing.engine import RoutingEngine
+from ..routing.rules import load_rules
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -70,6 +72,8 @@ async def log_request(
     status_code: int = 200,
     error: Optional[str] = None,
     streamed: bool = False,
+    routed_from: Optional[str] = None,
+    savings_usd: float = 0.0,
 ):
     """Non-blocking database log write."""
     try:
@@ -88,6 +92,8 @@ async def log_request(
                 status_code=status_code,
                 error=error,
                 streamed=streamed,
+                routed_from=routed_from,
+                savings_usd=savings_usd,
             )
             session.add(entry)
             await session.commit()
@@ -155,26 +161,78 @@ async def chat_completions(request: Request):
             "error": {"message": "model is required", "type": "invalid_request_error"}
         })
 
+    # ----- SMART ROUTING -----
+    routing_decision = None
+    original_model = model
+    try:
+        rules = await load_rules()
+        engine = RoutingEngine(rules=rules)
+        routing_decision = await engine.evaluate(model, messages)
+        if routing_decision.was_routed:
+            logger.info(
+                "Routing: %s -> %s (%s)",
+                routing_decision.original_model,
+                routing_decision.routed_model,
+                routing_decision.reason,
+            )
+            model = routing_decision.routed_model
+            body["model"] = model
+    except Exception:
+        logger.exception("Routing engine error, using original model")
+
     provider_name = determine_provider(model)
     clean_model = strip_provider_prefix(model)
 
+    # Build extra headers for routing info
+    routing_headers = {}
+    if routing_decision:
+        routing_headers["X-TrustLayer-Routed"] = str(routing_decision.was_routed).lower()
+        routing_headers["X-TrustLayer-Original-Model"] = routing_decision.original_model
+        routing_headers["X-TrustLayer-Task-Type"] = routing_decision.task_type
+        if routing_decision.was_routed:
+            routing_headers["X-TrustLayer-Savings"] = str(routing_decision.estimated_savings_pct) + "%"
+
+    routed_from = original_model if routing_decision and routing_decision.was_routed else None
+    savings_usd = routing_decision.estimated_savings_usd if routing_decision and routing_decision.was_routed else 0.0
+
     # ----- OLLAMA -----
     if provider_name == "ollama":
-        return await _proxy_ollama_chat(
+        response = await _proxy_ollama_chat(
             clean_model, messages, stream, temperature, max_tokens,
             source_ip, user_agent, start_time,
+            routed_from=routed_from, savings_usd=savings_usd,
         )
+        if isinstance(response, dict):
+            return JSONResponse(content=response, headers=routing_headers)
+        if isinstance(response, StreamingResponse):
+            for k, v in routing_headers.items():
+                response.headers[k] = v
+            return response
+        return response
 
     # ----- CLOUD PROVIDERS (OpenAI-compatible) -----
-    return await _proxy_cloud_chat(
+    response = await _proxy_cloud_chat(
         provider_name, clean_model, body, stream,
         source_ip, user_agent, start_time,
+        routed_from=routed_from, savings_usd=savings_usd,
     )
+    if isinstance(response, dict):
+        return JSONResponse(content=response, headers=routing_headers)
+    if isinstance(response, JSONResponse):
+        for k, v in routing_headers.items():
+            response.headers[k] = v
+        return response
+    if isinstance(response, StreamingResponse):
+        for k, v in routing_headers.items():
+            response.headers[k] = v
+        return response
+    return response
 
 
 async def _proxy_ollama_chat(
     model, messages, stream, temperature, max_tokens,
     source_ip, user_agent, start_time,
+    routed_from=None, savings_usd=0.0,
 ):
     """Forward chat to Ollama, translating OpenAI format <-> Ollama format."""
     ollama_url = OLLAMA_BASE_URL
@@ -222,6 +280,7 @@ async def _proxy_ollama_chat(
     asyncio.create_task(log_request(
         source_ip, user_agent, model, "ollama",
         prompt_tokens, completion_tokens, 0.0, latency,
+        routed_from=routed_from, savings_usd=savings_usd,
     ))
 
     return response
@@ -297,6 +356,7 @@ async def _stream_ollama(ollama_url, payload, model, source_ip, user_agent, star
 async def _proxy_cloud_chat(
     provider_name, model, body, stream,
     source_ip, user_agent, start_time,
+    routed_from=None, savings_usd=0.0,
 ):
     """Forward to a cloud provider using OpenAI-compatible API."""
     registry = get_registry()

@@ -1,16 +1,31 @@
 import { useEffect, useState } from 'react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+
+interface DigestData {
+  savings_usd: number
+  ollama_savings_usd: number
+  routing_savings_usd: number
+  requests_count: number
+  tokens_total: number
+  total_cost_usd: number
+  top_models: { model: string; requests: number; cost_usd: number }[]
+  routing_decisions: number
+  daily_breakdown: { date: string; requests: number; cost_usd: number }[]
+}
 
 export default function Costs() {
   const [summary, setSummary] = useState<any>(null)
   const [history, setHistory] = useState<any[]>([])
   const [tips, setTips] = useState<string[]>([])
   const [savings, setSavings] = useState<any>(null)
+  const [digest, setDigest] = useState<DigestData | null>(null)
 
   useEffect(() => {
     fetch('/api/costs/summary').then(r => r.json()).then(setSummary).catch(() => {})
     fetch('/api/costs/history').then(r => r.json()).then(setHistory).catch(() => {})
     fetch('/api/costs/optimize').then(r => r.json()).then(d => setTips(d.tips || [])).catch(() => {})
     fetch('/api/costs/savings').then(r => r.json()).then(setSavings).catch(() => {})
+    fetch('/api/digest/weekly').then(r => r.json()).then(setDigest).catch(() => {})
   }, [])
 
   return (
@@ -19,6 +34,59 @@ export default function Costs() {
         <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">Cost Tracker</h1>
         <p className="text-stone-500 mt-1">Real-time AI spending across all your providers.</p>
       </div>
+
+      {/* Savings Section */}
+      {digest && (
+        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl p-6 mb-6">
+          <h2 className="font-semibold text-green-900 dark:text-green-100 mb-4">Savings This Week</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">${digest.savings_usd.toFixed(2)}</p>
+              <p className="text-sm text-green-700 dark:text-green-400 mt-1">total saved</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-green-700 dark:text-green-300">${digest.ollama_savings_usd.toFixed(2)}</p>
+              <p className="text-sm text-green-700 dark:text-green-400 mt-1">from local Ollama</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-green-700 dark:text-green-300">${digest.routing_savings_usd.toFixed(2)}</p>
+              <p className="text-sm text-green-700 dark:text-green-400 mt-1">from smart routing ({digest.routing_decisions} decisions)</p>
+            </div>
+          </div>
+          <div className="text-xs text-green-600 dark:text-green-500">
+            {digest.requests_count} requests | {digest.tokens_total.toLocaleString()} tokens | ${digest.total_cost_usd.toFixed(4)} actual cost
+          </div>
+        </div>
+      )}
+
+      {/* Daily Cost Chart */}
+      {digest && digest.daily_breakdown.length > 0 && (
+        <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6 mb-6">
+          <h2 className="font-semibold text-stone-900 dark:text-stone-100 mb-5">Daily Costs (Past 7 Days)</h2>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={digest.daily_breakdown}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#44403c" opacity={0.2} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11 }}
+                tickFormatter={(v: string) => {
+                  const d = new Date(v + 'T00:00:00')
+                  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                }}
+              />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `$${v.toFixed(3)}`} />
+              <Tooltip
+                formatter={(value: number) => [`$${value.toFixed(4)}`, 'Cost']}
+                labelFormatter={(label: string) => {
+                  const d = new Date(label + 'T00:00:00')
+                  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                }}
+              />
+              <Bar dataKey="cost_usd" fill="#22c55e" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -94,7 +162,7 @@ export default function Costs() {
       {tips.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-6 mb-6">
           <h2 className="font-semibold text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2">
-            💡 Optimization Tips
+            Optimization Tips
           </h2>
           <ul className="space-y-2">
             {tips.map((tip, i) => (
@@ -107,7 +175,7 @@ export default function Costs() {
         </div>
       )}
 
-      {summary && summary.total_usd === 0 && (
+      {summary && summary.total_usd === 0 && !digest?.requests_count && (
         <div className="bg-stone-50 dark:bg-stone-900/50 rounded-xl border border-stone-200 dark:border-stone-800 p-12 text-center">
           <p className="text-stone-600 dark:text-stone-400 text-sm">No spending recorded yet. Start using AI through TrustLayer to track costs.</p>
         </div>
