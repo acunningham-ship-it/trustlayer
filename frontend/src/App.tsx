@@ -8,7 +8,7 @@ import Connectors from './pages/Connectors'
 import Compare from './pages/Compare'
 import Costs from './pages/Costs'
 import Knowledge from './pages/Knowledge'
-import Workflows from './pages/Workflows'
+import History from './pages/History'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
 
@@ -50,7 +50,7 @@ export default function App() {
           <Route path="/compare" element={<Compare />} />
           <Route path="/costs" element={<Costs />} />
           <Route path="/knowledge" element={<Knowledge />} />
-          <Route path="/workflows" element={<Workflows />} />
+          <Route path="/history" element={<History />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
