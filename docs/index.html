@@ -386,6 +386,48 @@
 
   <!-- HERO -->
   <section class="hero hero-bg">
+    <!-- Hero trust/network illustration -->
+    <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:680px;height:680px;opacity:0.15;pointer-events:none;z-index:0;" viewBox="0 0 680 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Central shield -->
+      <path d="M340 140 L340 540 C340 540 460 480 460 360 L460 200 L340 140Z" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <path d="M340 140 L340 540 C340 540 220 480 220 360 L220 200 L340 140Z" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <!-- Shield checkmark -->
+      <polyline points="300,340 330,370 380,300" stroke="var(--stone-400)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Network nodes -->
+      <circle cx="120" cy="180" r="16" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <circle cx="560" cy="180" r="16" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <circle cx="80" cy="400" r="14" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <circle cx="600" cy="400" r="14" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <circle cx="160" cy="560" r="12" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <circle cx="520" cy="560" r="12" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <circle cx="340" cy="620" r="10" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <circle cx="100" cy="300" r="10" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <circle cx="580" cy="300" r="10" fill="var(--stone-200)" stroke="var(--stone-300)" stroke-width="1.5"/>
+      <!-- Connecting lines from nodes to shield -->
+      <line x1="120" y1="180" x2="220" y2="200" stroke="var(--stone-300)" stroke-width="1"/>
+      <line x1="560" y1="180" x2="460" y2="200" stroke="var(--stone-300)" stroke-width="1"/>
+      <line x1="80" y1="400" x2="220" y2="360" stroke="var(--stone-300)" stroke-width="1"/>
+      <line x1="600" y1="400" x2="460" y2="360" stroke="var(--stone-300)" stroke-width="1"/>
+      <line x1="160" y1="560" x2="260" y2="480" stroke="var(--stone-300)" stroke-width="1"/>
+      <line x1="520" y1="560" x2="420" y2="480" stroke="var(--stone-300)" stroke-width="1"/>
+      <line x1="340" y1="620" x2="340" y2="540" stroke="var(--stone-300)" stroke-width="1"/>
+      <line x1="100" y1="300" x2="220" y2="280" stroke="var(--stone-300)" stroke-width="1"/>
+      <line x1="580" y1="300" x2="460" y2="280" stroke="var(--stone-300)" stroke-width="1"/>
+      <!-- Cross-connections between outer nodes -->
+      <line x1="120" y1="180" x2="100" y2="300" stroke="var(--stone-300)" stroke-width="0.5" stroke-dasharray="4,4"/>
+      <line x1="560" y1="180" x2="580" y2="300" stroke="var(--stone-300)" stroke-width="0.5" stroke-dasharray="4,4"/>
+      <line x1="80" y1="400" x2="160" y2="560" stroke="var(--stone-300)" stroke-width="0.5" stroke-dasharray="4,4"/>
+      <line x1="600" y1="400" x2="520" y2="560" stroke="var(--stone-300)" stroke-width="0.5" stroke-dasharray="4,4"/>
+      <line x1="160" y1="560" x2="340" y2="620" stroke="var(--stone-300)" stroke-width="0.5" stroke-dasharray="4,4"/>
+      <line x1="520" y1="560" x2="340" y2="620" stroke="var(--stone-300)" stroke-width="0.5" stroke-dasharray="4,4"/>
+      <!-- Small dots along connection lines -->
+      <circle cx="170" cy="190" r="3" fill="var(--stone-300)"/>
+      <circle cx="510" cy="190" r="3" fill="var(--stone-300)"/>
+      <circle cx="150" cy="380" r="3" fill="var(--stone-300)"/>
+      <circle cx="530" cy="380" r="3" fill="var(--stone-300)"/>
+      <circle cx="210" cy="520" r="3" fill="var(--stone-300)"/>
+      <circle cx="470" cy="520" r="3" fill="var(--stone-300)"/>
+    </svg>
     <div class="hero-badge">
       <span class="badge-dot"></span>
       Open Source · Local-first · Privacy by default
@@ -522,10 +564,10 @@
           <span class="feature-tag">Local indexing · Works offline</span>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">⚙️</div>
-          <h3>No-Code Workflows</h3>
-          <p>Visual workflow builder for non-developers. Templates for summarize-email, doc Q&A, and auto-verify. Drag and drop — no prompts needed.</p>
-          <span class="feature-tag">Visual builder · Pre-built templates</span>
+          <div class="feature-icon">📜</div>
+          <h3>History</h3>
+          <p>Complete log of every AI interaction. Trust scores, costs, latency, and full prompt/response pairs — searchable and filterable by provider.</p>
+          <span class="feature-tag">Searchable · Filterable · Full audit trail</span>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🎭</div>
@@ -535,8 +577,8 @@
         </div>
       </div>
       <div class="screenshot-wrapper" style="margin-top: 3rem;">
-        <img src="screenshots/workflows.png" alt="TrustLayer visual workflow builder" class="screenshot-img" style="max-width: 900px;" loading="lazy" />
-        <p class="screenshot-caption">No-code workflow builder with pre-built templates</p>
+        <img src="screenshots/history.png" alt="TrustLayer interaction history and audit log" class="screenshot-img" style="max-width: 900px;" loading="lazy" />
+        <p class="screenshot-caption">Complete interaction history — every AI call logged and searchable</p>
       </div>
     </div>
   </section>
@@ -702,7 +744,7 @@ comparison = requests.<span class="fn">post</span>(<span class="str">"http://loc
             <td><span class="cross">✗</span></td>
           </tr>
           <tr>
-            <td class="feature-col">No-code workflow builder</td>
+            <td class="feature-col">Complete interaction history &amp; audit log</td>
             <td class="trustlayer-col"><span class="check">✓</span></td>
             <td><span class="cross">✗</span></td>
             <td><span class="cross">✗</span></td>
