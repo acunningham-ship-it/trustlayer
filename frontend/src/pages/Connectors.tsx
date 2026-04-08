@@ -109,12 +109,18 @@ export default function Connectors() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">CLI Tools</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {cliTools.map(t => (
+        {cliTools.map(t => {
+          const cliId = t.name.toLowerCase().replace(/ /g, '-')
+          const isSelected = selected?.provider === cliId && selected?.model === 'cli'
+          return (
           <div
             key={t.name}
+            onClick={() => t.available && setSelected({ provider: cliId, model: 'cli' })}
             className={`rounded-xl border p-4 transition-all ${
               t.available
-                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50'
+                ? isSelected
+                  ? 'bg-emerald-100 dark:bg-emerald-950/50 border-emerald-400 dark:border-emerald-600 shadow-md cursor-pointer'
+                  : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 hover:shadow-lg cursor-pointer'
                 : 'bg-stone-50 dark:bg-stone-900/50 border-stone-200 dark:border-stone-800 opacity-60'
             }`}
           >
@@ -140,7 +146,8 @@ export default function Connectors() {
               <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">Not installed</p>
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {selected && (
