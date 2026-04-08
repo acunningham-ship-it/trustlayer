@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Shield, CheckCircle, AlertTriangle, Loader } from 'lucide-react'
 
 interface TrustBadgeState {
   visible: boolean
@@ -7,6 +6,27 @@ interface TrustBadgeState {
   score?: number
   message?: string
 }
+
+// Inline SVG icons to avoid external dependencies
+const SpinnerIcon = ({ className }: { className: string }) => (
+  <svg className={`${className} animate-spin`} fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+  </svg>
+)
+
+const CheckIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M8 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+const WarningIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+  </svg>
+)
 
 export default function TrustBadge() {
   const [state, setState] = useState<TrustBadgeState>({
@@ -21,8 +41,8 @@ export default function TrustBadge() {
   const handleVerificationComplete = (score: number, message: string) => {
     const status = score >= 85 ? 'verified' : score >= 60 ? 'warning' : 'error'
     setState({ visible: true, status, score, message })
-    // Auto-hide after 8 seconds
-    setTimeout(() => setState(prev => ({ ...prev, visible: false })), 8000)
+    // Auto-hide after 4 seconds
+    setTimeout(() => setState(prev => ({ ...prev, visible: false })), 4000)
   }
 
   const handleDismiss = () => {
@@ -69,14 +89,14 @@ export default function TrustBadge() {
     >
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
-          {state.status === 'verifying' ? (
-            <Loader className={`h-5 w-5 ${iconColor} animate-spin`} />
-          ) : state.status === 'verified' ? (
-            <CheckCircle className={`h-5 w-5 ${iconColor}`} />
-          ) : state.status === 'warning' ? (
-            <AlertTriangle className={`h-5 w-5 ${iconColor}`} />
-          ) : (
-            <AlertTriangle className={`h-5 w-5 ${iconColor}`} />
+          {state.status === 'verifying' && (
+            <SpinnerIcon className={`h-5 w-5 ${iconColor}`} />
+          )}
+          {state.status === 'verified' && (
+            <CheckIcon className={`h-5 w-5 ${iconColor}`} />
+          )}
+          {(state.status === 'warning' || state.status === 'error') && (
+            <WarningIcon className={`h-5 w-5 ${iconColor}`} />
           )}
         </div>
         <div className="flex-1 min-w-0">
