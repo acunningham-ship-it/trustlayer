@@ -25,26 +25,32 @@ export default function Connectors() {
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/connectors/').then(r => r.json()).then(data => {
-      setConnectors(data)
-      const first = data.find((c: Connector) => c.available && c.models.length > 0)
-      if (first) setSelected({ provider: first.name, model: first.models[0] })
-    }).catch(() => {})
+  // Known models for CLI tools
+  const CLI_MODELS: Record<string, string[]> = {
+    'Claude Code': ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
+    'Gemini CLI': ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
+  }
 
-    fetch('/api/connectors/cli').then(r => r.json()).then(data => {
-      setCliTools(data)
-      // Merge available CLI tools into connectors as provider cards
-      const cliAsConnectors = data
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/connectors/').then(r => r.json()).catch(() => []),
+      fetch('/api/connectors/cli').then(r => r.json()).catch(() => []),
+    ]).then(([apiData, cliData]) => {
+      setCliTools(cliData)
+      // Merge CLI tools into a single providers list
+      const cliAsConnectors = cliData
         .filter((t: CliTool) => t.available)
         .map((t: CliTool) => ({
           name: t.name,
           type: 'cli',
           available: true,
-          models: [t.version ? `cli (${t.version})` : 'cli'],
+          models: CLI_MODELS[t.name] || ['cli'],
         }))
-      setConnectors(prev => [...prev, ...cliAsConnectors])
-    }).catch(() => {})
+      const all = [...apiData, ...cliAsConnectors]
+      setConnectors(all)
+      const first = all.find((c: Connector) => c.available && c.models.length > 0)
+      if (first) setSelected({ provider: first.name, model: first.models[0] })
+    })
   }, [])
 
   const ask = async () => {
