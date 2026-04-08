@@ -1,5 +1,6 @@
 """Settings router — runtime configuration management."""
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -17,72 +18,141 @@ class OllamaUpdate(BaseModel):
     url: str
 
 
+class SettingsUpdate(BaseModel):
+    apiKeys: dict = {}
+    budget: float | None = None
+
+
+class ProviderTest(BaseModel):
+    apiKey: str | None = None
+    baseUrl: str | None = None
+
+
 @router.get("")
 async def get_settings(db=Depends(get_db)):
-    """Get current configuration settings (budget, ollama_url, api keys status)."""
-    settings = {}
+    """Get current configuration settings (apiKeys and budget)."""
+    settings = {
+        "apiKeys": {
+            "anthropic": "",
+            "openai": "",
+            "google": "",
+            "ollamaBaseUrl": ""
+        },
+        "budget": None
+    }
 
     # Fetch all settings from database
     result = await db.execute(select(UserProfile).filter(UserProfile.key.startswith("settings.")))
     rows = result.scalars().all()
 
     for row in rows:
-        # Extract setting name from key (e.g., "settings.budget" -> "budget")
         setting_name = row.key.replace("settings.", "")
         value = row.value
 
-        # For API keys, return boolean indicating if set
-        if setting_name.endswith("_key"):
-            settings[setting_name] = bool(value and value.get("value"))
-        else:
-            settings[setting_name] = value.get("value") if isinstance(value, dict) else value
+        if setting_name == "budget":
+            settings["budget"] = value.get("value") if isinstance(value, dict) else value
+        elif setting_name == "anthropic_key":
+            settings["apiKeys"]["anthropic"] = value.get("value", "") if isinstance(value, dict) else ""
+        elif setting_name == "openai_key":
+            settings["apiKeys"]["openai"] = value.get("value", "") if isinstance(value, dict) else ""
+        elif setting_name == "google_key":
+            settings["apiKeys"]["google"] = value.get("value", "") if isinstance(value, dict) else ""
+        elif setting_name == "ollama_url":
+            settings["apiKeys"]["ollamaBaseUrl"] = value.get("value", "") if isinstance(value, dict) else ""
 
-    # Provide defaults if not set
-    return {
-        "budget": settings.get("budget", 10.0),
-        "ollama_url": settings.get("ollama_url", "http://localhost:11434"),
-        "api_keys_set": {
-            "openai": settings.get("openai_key", False),
-            "anthropic": settings.get("anthropic_key", False),
-        },
+    return settings
+
+
+@router.put("")
+async def update_settings(update: SettingsUpdate, db=Depends(get_db)):
+    """Update settings (apiKeys and budget)."""
+    # Update budget if provided
+    if update.budget is not None:
+        if update.budget < 0:
+            raise HTTPException(status_code=400, detail="Budget must be non-negative")
+
+        result = await db.execute(select(UserProfile).filter(UserProfile.key == "settings.budget"))
+        profile = result.scalar()
+
+        if profile:
+            profile.value = {"value": update.budget}
+        else:
+            profile = UserProfile(key="settings.budget", value={"value": update.budget})
+            db.add(profile)
+
+    # Update API keys if provided
+    api_key_mapping = {
+        "anthropic": "settings.anthropic_key",
+        "openai": "settings.openai_key",
+        "google": "settings.google_key",
+        "ollamaBaseUrl": "settings.ollama_url"
     }
 
+    for key_name, setting_key in api_key_mapping.items():
+        if key_name in update.apiKeys:
+            value = update.apiKeys[key_name]
+            if value:  # Only update if value is provided
+                result = await db.execute(select(UserProfile).filter(UserProfile.key == setting_key))
+                profile = result.scalar()
 
-@router.put("/budget")
-async def update_budget(update: BudgetUpdate, db=Depends(get_db)):
-    """Update monthly budget setting."""
-    if update.budget < 0:
-        raise HTTPException(status_code=400, detail="Budget must be non-negative")
-
-    # Check if settings.budget exists
-    result = await db.execute(select(UserProfile).filter(UserProfile.key == "settings.budget"))
-    profile = result.scalar()
-
-    if profile:
-        profile.value = {"value": update.budget}
-    else:
-        profile = UserProfile(key="settings.budget", value={"value": update.budget})
-        db.add(profile)
+                if profile:
+                    profile.value = {"value": value}
+                else:
+                    profile = UserProfile(key=setting_key, value={"value": value})
+                    db.add(profile)
 
     await db.commit()
-    return {"budget": update.budget}
+    return {"status": "ok"}
 
 
-@router.put("/ollama")
-async def update_ollama(update: OllamaUpdate, db=Depends(get_db)):
-    """Update Ollama API endpoint URL."""
-    if not update.url.strip():
-        raise HTTPException(status_code=400, detail="URL cannot be empty")
+@router.post("/test-provider/{provider}")
+async def test_provider(provider: str, test: ProviderTest):
+    """Test API provider connection."""
+    try:
+        if provider == "anthropic":
+            if not test.apiKey:
+                return {"status": False}
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://api.anthropic.com/v1/models",
+                    headers={"x-api-key": test.apiKey},
+                    timeout=5.0
+                )
+                return {"status": response.status_code == 200}
 
-    # Check if settings.ollama_url exists
-    result = await db.execute(select(UserProfile).filter(UserProfile.key == "settings.ollama_url"))
-    profile = result.scalar()
+        elif provider == "openai":
+            if not test.apiKey:
+                return {"status": False}
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://api.openai.com/v1/models",
+                    headers={"Authorization": f"Bearer {test.apiKey}"},
+                    timeout=5.0
+                )
+                return {"status": response.status_code == 200}
 
-    if profile:
-        profile.value = {"value": update.url}
-    else:
-        profile = UserProfile(key="settings.ollama_url", value={"value": update.url})
-        db.add(profile)
+        elif provider == "google":
+            if not test.apiKey:
+                return {"status": False}
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"https://generativelanguage.googleapis.com/v1/models?key={test.apiKey}",
+                    timeout=5.0
+                )
+                return {"status": response.status_code == 200}
 
-    await db.commit()
-    return {"ollama_url": update.url}
+        elif provider == "ollama":
+            if not test.baseUrl:
+                return {"status": False}
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{test.baseUrl}/api/tags",
+                    timeout=5.0
+                )
+                return {"status": response.status_code == 200}
+
+        else:
+            raise HTTPException(status_code=400, detail="Unknown provider")
+
+    except Exception:
+        return {"status": False}
