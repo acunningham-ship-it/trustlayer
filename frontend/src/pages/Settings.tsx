@@ -300,7 +300,7 @@ export default function Settings() {
               Links
             </p>
             <a
-              href="https://github.com/anthropics/trustlayer"
+              href="https://github.com/acunningham-ship-it/trustlayer"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
