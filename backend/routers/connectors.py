@@ -16,7 +16,7 @@ class CompleteRequest(BaseModel):
     max_tokens: Optional[int] = 2048
 
 
-@router.get("/")
+@router.get("")
 async def list_connectors():
     """List all configured AI providers and their availability."""
     registry = get_registry()
