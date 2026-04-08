@@ -7,7 +7,7 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.routers.verify import TrustScore
+from backend.routers.verify import TrustScore, SourceCitation, ClaimExtractor
 
 
 def test_high_trust_simple_factual():
@@ -79,3 +79,82 @@ def test_label_mapping():
         assert result["label"] == "medium"
     else:
         assert result["label"] == "low"
+
+
+def test_source_citation_extraction():
+    """Test extraction of source citations and URLs."""
+    content = (
+        "As reported by Smith et al. (2020), the rate is 45%. "
+        "See https://example.com for details. [1] Citation here."
+    )
+    citation = SourceCitation(content)
+    summary = citation.get_summary()
+    assert summary["url_count"] >= 1
+    assert "https://example.com" in summary["urls"]
+    assert summary["citation_count"] >= 1
+
+
+def test_claim_extraction():
+    """Test extraction of key claims."""
+    content = (
+        "The economy grew 3.2% in Q1. On January 15, the market rose significantly. "
+        "Companies reported 45% higher earnings."
+    )
+    extractor = ClaimExtractor(content)
+    claims = extractor.get_claims()
+    assert len(claims) > 0
+    # At least one claim should contain quantitative data
+    claim_str = ' '.join(str(c) for c in claims)
+    assert any(num in claim_str for num in ['3.2', '45'])
+
+
+def test_factual_consistency_check():
+    """Test detection of contradictions."""
+    content = "This is true but it is also false. However, it must be exactly the same."
+    ts = TrustScore(content)
+    result = ts.compute()
+    # Should detect contradiction
+    contradiction_issues = [i for i in result["issues"] if "contradiction" in i.lower()]
+    assert len(contradiction_issues) > 0
+    assert result["score"] < 100
+
+
+def test_source_citation_scoring():
+    """Test that proper citations improve score."""
+    content_no_source = "AI is the future. It will revolutionize everything."
+    content_with_source = (
+        "As reported by Smith et al. (2022) at https://example.com, "
+        "AI is advancing rapidly. [1] It will transform industries."
+    )
+
+    ts_no = TrustScore(content_no_source)
+    result_no = ts_no.compute()
+
+    ts_with = TrustScore(content_with_source)
+    result_with = ts_with.compute()
+
+    # Content with sources should score better
+    assert result_with["score"] >= result_no["score"]
+
+
+def test_hallucinated_entities():
+    """Test detection of suspicious entity patterns."""
+    content = (
+        "According to Dr. John Smith of ACME 123, there is XYZ 456 in Pleasantshire. "
+        "The findings were published in RESEARCH 789 journal."
+    )
+    ts = TrustScore(content)
+    result = ts.compute()
+    entity_issues = [i for i in result["issues"] if "fabricated" in i.lower()]
+    assert len(entity_issues) > 0
+
+
+def test_verify_result_has_new_fields():
+    """Test that verification result includes new fields."""
+    ts = TrustScore("Check this content https://example.com for details.")
+    result = ts.compute()
+    assert "claims" in result
+    assert "sources" in result
+    assert isinstance(result["claims"], list)
+    assert "urls" in result["sources"]
+    assert "citation_count" in result["sources"]
